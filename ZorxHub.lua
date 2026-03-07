@@ -125,7 +125,7 @@ local function createWindow(title, pos, isMain)
     f.Size = UDim2.new(0, 220, 0, 320)
     f.Position = pos
     f.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    f.BackgroundTransparency = 1.2
+    f.BackgroundTransparency = 1.1
 
     local sT = Instance.new("UIStroke", f); sT.Color = Color3.fromRGB(200, 0, 0); sT.Thickness = 1
     local t = Instance.new("TextLabel", f); t.Size = UDim2.new(1,0,0,35); t.Text = title; t.TextColor3 = Color3.new(1,1,1); t.BackgroundColor3 = Color3.fromRGB(0,0,0); t.BackgroundTransparency = 1
@@ -142,30 +142,45 @@ local function createWindow(title, pos, isMain)
     Instance.new("UIListLayout", s).Padding = UDim.new(0,5); return f, s
 end
 
-local zorxFrame, zorxScroll = createWindow("⚡Nanda×ZorxHUB⚡", UDim2.new(0,0,0,0), true)
-local emoFrame, emoScroll = createWindow("Emoticon🤡", UDim2.new(0,220,0,0), false)
-local staffFrame, staffScroll = createWindow("STAFF TOOLS (🛠️)", UDim2.new(0,440,0,0), false)
+local zorxFrame, zorxScroll = createWindow("ZorxHUB", UDim2.new(0,0,0,0), true)
+local emoFrame, emoScroll = createWindow("Emoticon", UDim2.new(0,220,0,0), false)
+local staffFrame, staffScroll = createWindow("STAFF TOOLS", UDim2.new(0,440,0,0), false)
 
-zorxFrame.Position = UDim2.new(0,0,0,0)
-emoFrame.Position = UDim2.new(0,220,0,0)
-staffFrame.Position = UDim2.new(0,440,0,0)
+zorxFrame.BackgroundColor3 = Color3.fromRGB(40, 0, 40)
+emoFrame.BackgroundColor3  = Color3.fromRGB(0, 40, 40)
+staffFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 0)
 
 -- NOTE FRAME
 local noteFrame = Instance.new("Frame", gui)
 noteFrame.Size = UDim2.new(0, 220, 0, 50)
 noteFrame.Position = UDim2.new(0.5, 120, 0.5, -205)
-noteFrame.BackgroundColor3 = Color3.fromRGB(15,0,0)
-noteFrame.BackgroundTransparency = 0.2
+noteFrame.BackgroundTransparency = 1
 noteFrame.Visible = true
 Instance.new("UICorner", noteFrame)
 
+local noteStroke = Instance.new("UIStroke", noteFrame)
+noteStroke.Color = Color3.fromRGB(255,0,0)
+noteStroke.Thickness = 1
+
+local noteImage = Instance.new("ImageLabel", noteFrame)
+noteImage.Size = UDim2.new(1,0,1,0)
+noteImage.BackgroundTransparency = 1
+noteImage.Image = "rbxassetid://85462255439341"
+noteImage.ScaleType = Enum.ScaleType.Stretch
+
 -- ===== UI NOTE DI ATAS STAFF TOOLS =====
 local noteStroke = Instance.new("UIStroke", noteFrame); noteStroke.Color = Color3.fromRGB(255, 0, 0); noteStroke.Thickness = 1
-local noteLabel = Instance.new("TextLabel", noteFrame)
-noteLabel.Size = UDim2.new(1, -10, 1, -10); noteLabel.Position = UDim2.new(0, 5, 0, 5); noteLabel.BackgroundTransparency = 1; noteLabel.Text = "NOTE: PAKAI FLY INF DULU YA SBELUM GUNAIN TOOLNYA😈✌🏼"; noteLabel.TextColor3 = Color3.fromRGB(255, 255, 255); noteLabel.TextSize = 10; noteLabel.Font = Enum.Font.GothamBold; noteLabel.TextWrapped = true
+
+local noteImage = Instance.new("ImageLabel", noteFrame)
+noteImage.Size = UDim2.new(1,0,1,0)
+noteImage.Position = UDim2.new(0,0,0,0)
+noteImage.BackgroundTransparency = 1
+noteImage.Image = "rbxassetid://85462255439341"
+noteImage.ScaleType = Enum.ScaleType.Stretch
+noteImage.ZIndex = 5
 
 local function addBtn(txt, parent, cb)
-    local b = Instance.new("TextButton", parent); b.Size = UDim2.new(0.95,0,0,45); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(25,25,25); b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b); Instance.new("UIStroke", b).Color = Color3.fromRGB(100,0,0)
+    local b = Instance.new("TextButton", parent); b.Size = UDim2.new(0.95,0,0,45); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(25,25,25)b.BackgroundTransparency = 0.4; b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b); Instance.new("UIStroke", b).Color = Color3.fromRGB(100,0,0)
     b.MouseButton1Click:Connect(cb); return b
 end
 
