@@ -95,53 +95,29 @@ end
 -- ===== 3. UI SETUP =====
 local gui = Instance.new("ScreenGui", player.PlayerGui); gui.Name = "NzkRedBlack"; gui.ResetOnSpawn = false
 
-local CoreGui = game:GetService("CoreGui")
+-- FPS + WIFI MONITOR
+local statsGui = Instance.new("ScreenGui", game.CoreGui)
+statsGui.Name = "NZStats"
+
+local statsText = Instance.new("TextLabel", statsGui)
+statsText.Size = UDim2.new(0,120,0,40)
+statsText.Position = UDim2.new(0,10,0,5) -- pojok kiri atas
+statsText.BackgroundTransparency = 1
+statsText.TextColor3 = Color3.fromRGB(255,255,255)
+statsText.TextScaled = true
+statsText.Font = Enum.Font.GothamBold
+statsText.TextXAlignment = Enum.TextXAlignment.Left
+
 local Stats = game:GetService("Stats")
-local RunService = game:GetService("RunService")
-
-local gui = Instance.new("ScreenGui", CoreGui)
-gui.Name = "ZorHUB_Smart"
-
-local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0, 160, 0, 40)
-panel.Position = UDim2.new(0.5, -80, 0.05, 0)
-panel.BackgroundTransparency = 1 
-panel.Active = true
-panel.Draggable = true
-
-local monitor = Instance.new("TextLabel", panel)
-monitor.Size = UDim2.new(1, 0, 1, 0)
-monitor.BackgroundTransparency = 1
-monitor.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-monitor.TextStrokeTransparency = 0 
-monitor.TextSize = 16
-monitor.Font = Enum.Font.SourceSansBold
-monitor.Text = "FPS: -- | PING: --"
-
-local frameCount = 0
-local lastTime = tick()
+local last = tick()
 
 RunService.RenderStepped:Connect(function()
-    frameCount = frameCount + 1
-    local now = tick()
-    
-    if now - lastTime >= 1 then
-        local fps = frameCount
-        local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
-        
-        monitor.Text = "FPS: " .. fps .. " | PING: " .. ping .. "ms"
-        
-        -- LOGIKA WARNA PINTAR
-        -- Jika FPS di atas 30 = Hijau (Bagus), di bawah itu = Merah (Jelek)
-        if fps >= 30 then
-            monitor.TextColor3 = Color3.fromRGB(0, 255, 0)
-        else
-            monitor.TextColor3 = Color3.fromRGB(180, 0, 0)
-        end
-        
-        frameCount = 0
-        lastTime = now
-    end
+    local fps = math.floor(1/(tick()-last))
+    last = tick()
+
+    local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+
+    statsText.Text = "FPS: "..fps.."\nWifi: "..ping
 end)
 
 -- FRAME INDUK UI (nyatuin ketiga frame)
