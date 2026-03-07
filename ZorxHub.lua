@@ -447,10 +447,15 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-player.CharacterAdded:Connect(function()
+player.CharacterAdded:Connect(function(char)
+
+    local hum = char:WaitForChild("Humanoid")
+    local root = char:WaitForChild("HumanoidRootPart")
+
     flying = false
     flyInf = false
     stickTarget = nil
+    lockTarget = nil
 
     if _G.UpBtn then
         _G.UpBtn.Visible = false
@@ -459,7 +464,9 @@ player.CharacterAdded:Connect(function()
     if _G.DownBtn then
         _G.DownBtn.Visible = false
     end
+
+    zorxNotif("Respawn detected")
+
 end)
 
 zorxNotif("Welcome Hariyono😘❤‍🔥")
-  
