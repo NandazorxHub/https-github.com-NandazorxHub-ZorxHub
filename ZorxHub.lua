@@ -374,16 +374,20 @@ downBtn.MouseButton1Down:Connect(function() vDir = -flySpeed end); downBtn.Mouse
 -- DETECT PLAYER DEATH
 local function monitorPlayer(plr)
     if plr == player then return end
-    
+
     plr.CharacterAdded:Connect(function(char)
         local hum = char:WaitForChild("Humanoid")
-        
+
         hum.Died:Connect(function()
-            if killMusicOn then
-                playKillSound()
+            local tag = hum:FindFirstChild("creator")
+
+            if tag and tag.Value == player then
+                if killMusicOn then
+                    playKillSound()
+                end
             end
         end)
-        
+
     end)
 end
 
@@ -443,8 +447,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-zorxNotif("STUCK RELEASE ADDED! 😈❌")
-
 player.CharacterAdded:Connect(function()
     flying = false
     flyInf = false
@@ -458,4 +460,6 @@ player.CharacterAdded:Connect(function()
         _G.DownBtn.Visible = false
     end
 end)
+
+zorxNotif("Welcome Hariyono😘❤‍🔥")
   
