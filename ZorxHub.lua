@@ -92,11 +92,10 @@ local function getTargetUnderCursor()
 end
 
 -- ===== 3. UI SETUP =====
-local Players = game:GetService("Players")
-
 local gui = Instance.new("ScreenGui")
 gui.Name = "NzkRedBlack"
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+gui.Parent = game.CoreGui
 
 -- FPS + WIFI MONITOR
 local statsGui = Instance.new("ScreenGui", game.CoreGui)
@@ -138,17 +137,6 @@ bg.ScaleType = Enum.ScaleType.Stretch
 bg.ZIndex = -1
 
 -- BACKGROUND IMAGE FULS --
-
-local vBtn = Instance.new("ImageButton", gui)
-vBtn.Name = "ZorxLogo"
-vBtn.Size = UDim2.new(0, 50, 0, 50)
-vBtn.Position = UDim2.new(0, 15, 0.5, 0)
-vBtn.BackgroundTransparency = 1
-vBtn.Image = "rbxassetid://120640380150905"
-vBtn.Active = true
-vBtn.Draggable = false
-vBtn.ZIndex = 10
-
 local function createWindow(title, pos, isMain)
     local f = Instance.new("Frame", uiContainer)
     f.Size = UDim2.new(0, 220, 0, 320)
@@ -339,25 +327,27 @@ local function playKillSound()
     if killCooldown then return end
     killCooldown = true
 
+    local char = player.Character
+    if not char then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
     local sound = Instance.new("Sound")
-    sound.SoundId = killSoundId
+    sound.SoundId = "rbxassetid://117909139728666"
     sound.Volume = 10
-    sound.Parent = workspace
+    sound.RollOffMode = Enum.RollOffMode.Inverse
+    sound.MaxDistance = 300
+    sound.EmitterSize = 80
+    sound.Parent = root
+
     sound:Play()
 
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
+    game.Debris:AddItem(sound,5)
 
     task.wait(0.3)
     killCooldown = false
 end
-
-vBtn.MouseButton1Click:Connect(function()
-    local s = not uiContainer.Visible
-    uiContainer.Visible = s
-    noteFrame.Visible = s
-end)
 aimToggle.MouseButton1Click:Connect(function() aimlockBtn.Visible = not aimlockBtn.Visible; aimToggle.Text = aimlockBtn.Visible and "▢" or "_" end)
 aimlockBtn.MouseButton1Click:Connect(function()
     aimlockOn = not aimlockOn
@@ -370,103 +360,198 @@ end)
 
 upBtn.MouseButton1Down:Connect(function() vDir = flySpeed end); upBtn.MouseButton1Up:Connect(function() vDir = 0 end)
 downBtn.MouseButton1Down:Connect(function() vDir = -flySpeed end); downBtn.MouseButton1Up:Connect(function() vDir = 0 end)
+-- NEW KILL MUSIC SYSTEM (UNIVERSAL)
 
--- DETECT PLAYER DEATH
-local function monitorPlayer(plr)
-    if plr == player then return end
+for _, plr in pairs(game.Players:GetPlayers()) do
 
-    plr.CharacterAdded:Connect(function(char)
-        local hum = char:WaitForChild("Humanoid")
+    if plr ~= player then
 
-        hum.Died:Connect(function()
-            local tag = hum:FindFirstChild("creator")
+        plr.CharacterAdded:Connect(function(char)
 
-            if tag and tag.Value == player then
-                if killMusicOn then
-                    playKillSound()
+            local hum = char:WaitForChild("Humanoid")
+
+            hum.Died:Connect(function()
+
+                if not killMusicOn then return end
+
+                local myChar = player.Character
+                if not myChar then return end
+
+                local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+                local enemyRoot = char:FindFirstChild("HumanoidRootPart")
+
+                if myRoot and enemyRoot then
+
+                    local dist = (myRoot.Position - enemyRoot.Position).Magnitude
+
+                    if dist < 25 then
+                        playKillSound()
+                    end
+
                 end
-            end
+
+            end)
+
         end)
 
-    end)
-end
+    end
 
--- MONITOR SEMUA PLAYER
-for _,p in pairs(game.Players:GetPlayers()) do
-    monitorPlayer(p)
-end
+end     
+game.Players.PlayerAdded:Connect(function(plr)
 
-game.Players.PlayerAdded:Connect(monitorPlayer)
--- DI BAWAH INI baru RunService
-RunService.Heartbeat:Connect(function()
+    if plr ~= player then
+
+        plr.CharacterAdded:Connect(function(char)
+
+            local hum = char:WaitForChild("Humanoid")
+
+            hum.Died:Connect(function()
+
+                if not killMusicOn then return end
+
+                local myChar = player.Character
+                if not myChar then return end
+
+                local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+                local enemyRoot = char:FindFirstChild("HumanoidRootPart")
+
+                if myRoot and enemyRoot then
+
+                    local dist = (myRoot.Position - enemyRoot.Position).Magnitude
+
+                    if dist < 25 then
+                        playKillSound()
+                    end
+
+                end
+
+            end)
+
+        end)
+
+    end
+
+end)
+    -- ===== ANTI KELUAR MAP =====
+    RunService.RenderStepped:Connect(function()
+
     local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    local hum = char.Humanoid
+    if not char then return end
+
+    local hum = char:FindFirstChild("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not root then return end
+
 
     -- ===== ANTI KELUAR MAP =====
     if root.Position.Y < -50 then
-    local spawn = workspace:FindFirstChildWhichIsA("SpawnLocation")
-    if spawn then
-        root.CFrame = spawn.CFrame + Vector3.new(0,5,0)
-    else
-        root.CFrame = CFrame.new(0,100,0)
+        local spawn = workspace:FindFirstChildWhichIsA("SpawnLocation")
+        if spawn then
+            root.CFrame = spawn.CFrame + Vector3.new(0,5,0)
+        else
+            root.CFrame = CFrame.new(0,100,0)
+        end
+        zorxNotif("Map Protection Activated!")
     end
-    zorxNotif("Map Protection Activated!")
-end
 
-    -- kode fly & stick player tetap di sini
+
+    -- ===== FLY MODE =====
     if flying then
-        local bv = root:FindFirstChild("FlyVel") or Instance.new("BodyVelocity", root); bv.Name = "FlyVel"
-        local bg = root:FindFirstChild("FlyGyro") or Instance.new("BodyGyro", root); bg.Name = "FlyGyro"
-        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9); bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        local bv = root:FindFirstChild("FlyVel") or Instance.new("BodyVelocity", root)
+        bv.Name = "FlyVel"
+
+        local bg = root:FindFirstChild("FlyGyro") or Instance.new("BodyGyro", root)
+        bg.Name = "FlyGyro"
+
+        bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+        bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
+
         bg.CFrame = camera.CFrame
         bv.Velocity = (hum.MoveDirection * flySpeed) + Vector3.new(0, vDir, 0)
-        hum.PlatformStand = true; root.AssemblyLinearVelocity = Vector3.zero
+
+        hum.PlatformStand = true
+        root.AssemblyLinearVelocity = Vector3.zero
     end
 
+
+    -- ===== FLY INF =====
     if flyInf then
-    root.AssemblyLinearVelocity =
-        camera.CFrame.LookVector * (hum.MoveDirection.Magnitude > 0 and 150 or 0)
-        + Vector3.new(0, 1.5, 0)
-end
-
-    if stickTarget and stickTarget.Character and stickTarget.Character:FindFirstChild("HumanoidRootPart") then
-        local tRoot = stickTarget.Character.HumanoidRootPart
-        if (root.Position - tRoot.Position).Magnitude > 20 or stickTarget.Character.Humanoid.Health <= 0 then
-            stickTarget = nil; hum.PlatformStand = false; zorxNotif("Auto-Release!")
-        else
-            root.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3.5); hum.PlatformStand = true
-        end
+        root.AssemblyLinearVelocity =
+            camera.CFrame.LookVector *
+            (hum.MoveDirection.Magnitude > 0 and 150 or 0)
+            + Vector3.new(0,1.5,0)
     end
-end)
 
+
+    -- ===== STICK PLAYER =====
+    if stickTarget and stickTarget.Character and stickTarget.Character:FindFirstChild("HumanoidRootPart") then
+
+        local tRoot = stickTarget.Character.HumanoidRootPart
+
+        if (root.Position - tRoot.Position).Magnitude > 20
+        or stickTarget.Character.Humanoid.Health <= 0 then
+
+            stickTarget = nil
+            hum.PlatformStand = false
+            zorxNotif("Auto-Release!")
+
+        else
+            root.CFrame = tRoot.CFrame * CFrame.new(0,0,3.5)
+            hum.PlatformStand = true
+        end
+
+    end
+
+end)
 RunService.RenderStepped:Connect(function()
     if aimlockOn and lockTarget and lockTarget.Parent and lockTarget.Parent:FindFirstChild("Humanoid") and lockTarget.Parent.Humanoid.Health > 0 then
         camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
     end
 end)
+-- ===== LOGO PERMANEN FIX DI KIRI =====
+local function createFixedLogo()
 
-player.CharacterAdded:Connect(function(char)
+    if game.CoreGui:FindFirstChild("ZorxLogoGui") then return end
 
-    local hum = char:WaitForChild("Humanoid")
-    local root = char:WaitForChild("HumanoidRootPart")
+    local logoGui = Instance.new("ScreenGui")
+    logoGui.Name = "ZorxLogoGui"
+    logoGui.Parent = game.CoreGui
+    logoGui.ResetOnSpawn = false
 
+    local logo = Instance.new("ImageButton")
+    logo.Parent = logoGui
+    logo.Size = UDim2.new(0,50,0,50)
+    logo.Position = UDim2.new(0,10,0.5,-25)
+    logo.BackgroundTransparency = 1
+    logo.Image = "rbxassetid://120640380150905"
+    logo.ZIndex = 999
+
+    logo.MouseButton1Click:Connect(function()
+
+    if uiContainer and uiContainer.Parent then
+        uiContainer.Visible = not uiContainer.Visible
+    end
+
+    if noteFrame and noteFrame.Parent then
+        noteFrame.Visible = not noteFrame.Visible
+    end
+
+end)
+
+end -- tutup function createFixedLogo
+
+createFixedLogo()
+player.CharacterAdded:Connect(function()
     flying = false
     flyInf = false
     stickTarget = nil
     lockTarget = nil
 
-    if _G.UpBtn then
-        _G.UpBtn.Visible = false
-    end
-
-    if _G.DownBtn then
-        _G.DownBtn.Visible = false
-    end
+    if _G.UpBtn then _G.UpBtn.Visible = false end
+    if _G.DownBtn then _G.DownBtn.Visible = false end
 
     zorxNotif("Respawn detected")
-
 end)
 
-zorxNotif("Welcome Hariyono😘❤‍🔥")
+zorxNotif("Welcome Back ZORXHUB😈")
+
