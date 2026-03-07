@@ -95,6 +95,55 @@ end
 -- ===== 3. UI SETUP =====
 local gui = Instance.new("ScreenGui", player.PlayerGui); gui.Name = "NzkRedBlack"; gui.ResetOnSpawn = false
 
+local CoreGui = game:GetService("CoreGui")
+local Stats = game:GetService("Stats")
+local RunService = game:GetService("RunService")
+
+local gui = Instance.new("ScreenGui", CoreGui)
+gui.Name = "ZorHUB_Smart"
+
+local panel = Instance.new("Frame", gui)
+panel.Size = UDim2.new(0, 160, 0, 40)
+panel.Position = UDim2.new(0.5, -80, 0.05, 0)
+panel.BackgroundTransparency = 1 
+panel.Active = true
+panel.Draggable = true
+
+local monitor = Instance.new("TextLabel", panel)
+monitor.Size = UDim2.new(1, 0, 1, 0)
+monitor.BackgroundTransparency = 1
+monitor.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+monitor.TextStrokeTransparency = 0 
+monitor.TextSize = 16
+monitor.Font = Enum.Font.SourceSansBold
+monitor.Text = "FPS: -- | PING: --"
+
+local frameCount = 0
+local lastTime = tick()
+
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local now = tick()
+    
+    if now - lastTime >= 1 then
+        local fps = frameCount
+        local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+        
+        monitor.Text = "FPS: " .. fps .. " | PING: " .. ping .. "ms"
+        
+        -- LOGIKA WARNA PINTAR
+        -- Jika FPS di atas 30 = Hijau (Bagus), di bawah itu = Merah (Jelek)
+        if fps >= 30 then
+            monitor.TextColor3 = Color3.fromRGB(0, 255, 0)
+        else
+            monitor.TextColor3 = Color3.fromRGB(180, 0, 0)
+        end
+        
+        frameCount = 0
+        lastTime = now
+    end
+end)
+
 -- FRAME INDUK UI (nyatuin ketiga frame)
 local uiContainer = Instance.new("Frame", gui)
 uiContainer.Size = UDim2.new(0, 660, 0, 320) -- 220*3 lebar frame UI
@@ -194,7 +243,7 @@ addBtn("🚀 FLY MODE", zorxScroll, function()
     zorxNotif("Fly "..(flying and "ON" or "OFF")) 
 end)
 
-local nameBox = Instance.new("TextBox", zorxScroll); nameBox.Size = UDim2.new(0.95,0,0,40); nameBox.PlaceholderText = "Nama Player..."; nameBox.BackgroundColor3 = Color3.fromRGB(30,30,30); nameBox.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", nameBox)
+local nameBox = Instance.new("TextBox", zorxScroll); nameBox.Size = UDim2.new(0.95,0,0,40); nameBox.PlaceholderText = "ZorxHUB"; nameBox.BackgroundColor3 = Color3.fromRGB(30,30,30); nameBox.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", nameBox)
 
 addBtn("📍 Stick to Player", zorxScroll, function()
     local tName = nameBox.Text:lower()
@@ -238,8 +287,6 @@ addBtn("❌ Lepas Teleport", zorxScroll, function()
         zorxNotif("Not sticking to anyone!")
     end
 end)
-
-addBtn("👁️ SMART ESP (G)", zorxScroll, function() _G.EspEnabled = not _G.EspEnabled; zorxNotif("ESP " .. (_G.EspEnabled and "ON" or "OFF")) end)
 
 -- UI 2 & 3 FEATURES (TETAP SAMA)
 addBtn("🕺 Dance Emotes", emoScroll, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Silly-Hacks/Emote-Gui/main/Main.lua"))() end)
