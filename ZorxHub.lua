@@ -16,24 +16,6 @@ local killMusicOn = false
 local killCooldown = false
 local killSoundId = "rbxassetid://117909139728666"
 
-local function playKillSound()
-    if killCooldown then return end
-    killCooldown = true
-
-    local sound = Instance.new("Sound")
-    sound.SoundId = killSoundId
-    sound.Volume = 10
-    sound.RollOffMaxDistance = 500
-    sound.Parent = workspace
-    sound:Play()
-
-    game:GetService("Debris"):AddItem(sound,5)
-
-    task.delay(1,function()
-        killCooldown = false
-    end)
-end
-
 -- ===== 1. STAFF SYSTEM (TAG & MSG) =====
 TextChatService.OnIncomingMessage = function(message)
     local properties = Instance.new("TextChatMessageProperties")
@@ -111,7 +93,6 @@ end
 
 -- ===== 3. UI SETUP =====
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "NzkRedBlack"
@@ -354,6 +335,24 @@ local downBtn = Instance.new("TextButton", gui); downBtn.Size = UDim2.new(0,60,0
 _G.UpBtn, _G.DownBtn = upBtn, downBtn
 
 -- ===== 4. ENGINE =====
+local function playKillSound()
+    if killCooldown then return end
+    killCooldown = true
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = killSoundId
+    sound.Volume = 10
+    sound.Parent = workspace
+    sound:Play()
+
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+
+    task.wait(0.3)
+    killCooldown = false
+end
+
 vBtn.MouseButton1Click:Connect(function()
     local s = not uiContainer.Visible
     uiContainer.Visible = s
