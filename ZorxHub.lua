@@ -5,7 +5,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local camera = workspace.CurrentCamera
 
--- Variables State
 local flying = false
 local flyInf = false
 local aimlockOn = false
@@ -13,9 +12,27 @@ local lockTarget = nil
 local vDir = 0
 local flySpeed = 85
 local stickTarget = nil
-_G.EspEnabled = false
-local activeESP = {}
-local knownHero = {}
+local killMusicOn = false
+local killCooldown = false
+local killSoundId = "rbxassetid://117909139728666"
+
+local function playKillSound()
+    if killCooldown then return end
+    killCooldown = true
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = killSoundId
+    sound.Volume = 10
+    sound.RollOffMaxDistance = 500
+    sound.Parent = workspace
+    sound:Play()
+
+    game:GetService("Debris"):AddItem(sound,5)
+
+    task.delay(1,function()
+        killCooldown = false
+    end)
+end
 
 -- ===== 1. STAFF SYSTEM (TAG & MSG) =====
 TextChatService.OnIncomingMessage = function(message)
@@ -93,7 +110,12 @@ local function getTargetUnderCursor()
 end
 
 -- ===== 3. UI SETUP =====
-local gui = Instance.new("ScreenGui", player.PlayerGui); gui.Name = "NzkRedBlack"; gui.ResetOnSpawn = false
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "NzkRedBlack"
+gui.Parent = player:WaitForChild("PlayerGui")
 
 -- FPS + WIFI MONITOR
 local statsGui = Instance.new("ScreenGui", game.CoreGui)
@@ -112,8 +134,9 @@ local Stats = game:GetService("Stats")
 local last = tick()
 
 RunService.RenderStepped:Connect(function()
-    local fps = math.floor(1/(tick()-last))
-    last = tick()
+    local now = tick()
+    local fps = math.floor(1/(now-last))
+    last = now
 
     local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
 
@@ -141,7 +164,7 @@ vBtn.Size = UDim2.new(0, 50, 0, 50)
 vBtn.Position = UDim2.new(0, 15, 0.5, 0)
 vBtn.BackgroundTransparency = 1
 vBtn.Image = "rbxassetid://120640380150905"
-vBtn.Active = false
+vBtn.Active = true
 vBtn.Draggable = false
 vBtn.ZIndex = 10
 
@@ -150,7 +173,7 @@ local function createWindow(title, pos, isMain)
     f.Size = UDim2.new(0, 220, 0, 320)
     f.Position = pos
     f.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    f.BackgroundTransparency = 1.1
+    f.BackgroundTransparency = 1
 
     local sT = Instance.new("UIStroke", f); sT.Color = Color3.fromRGB(200, 0, 0); sT.Thickness = 1
     local t = Instance.new("TextLabel", f); t.Size = UDim2.new(1,0,0,35); t.Text = title; t.TextColor3 = Color3.new(1,1,1); t.BackgroundColor3 = Color3.fromRGB(0,0,0); t.BackgroundTransparency = 1
@@ -183,16 +206,6 @@ noteFrame.BackgroundTransparency = 1
 noteFrame.Visible = true
 Instance.new("UICorner", noteFrame)
 
-local noteStroke = Instance.new("UIStroke", noteFrame)
-noteStroke.Color = Color3.fromRGB(255,0,0)
-noteStroke.Thickness = 1
-
-local noteImage = Instance.new("ImageLabel", noteFrame)
-noteImage.Size = UDim2.new(1,0,1,0)
-noteImage.BackgroundTransparency = 1
-noteImage.Image = "rbxassetid://85462255439341"
-noteImage.ScaleType = Enum.ScaleType.Stretch
-
 -- ===== UI NOTE DI ATAS STAFF TOOLS =====
 local noteStroke = Instance.new("UIStroke", noteFrame); noteStroke.Color = Color3.fromRGB(255, 0, 0); noteStroke.Thickness = 1
 
@@ -205,18 +218,41 @@ noteImage.ScaleType = Enum.ScaleType.Stretch
 noteImage.ZIndex = 5
 
 local function addBtn(txt, parent, cb)
-    local b = Instance.new("TextButton", parent); b.Size = UDim2.new(0.95,0,0,45); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(25,25,25)b.BackgroundTransparency = 0.4; b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b); Instance.new("UIStroke", b).Color = Color3.fromRGB(100,0,0)
-    b.MouseButton1Click:Connect(cb); return b
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(0.95,0,0,45)
+    b.Text = txt
+    b.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    b.BackgroundTransparency = 0.4
+    b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", b)
+    Instance.new("UIStroke", b).Color = Color3.fromRGB(100,0,0)
+
+    b.MouseButton1Click:Connect(cb)
+    return b
 end
 
 -- UI 1 FEATURES
 addBtn("🚀 FLY MODE", zorxScroll, function() 
-    flying = not flying; _G.UpBtn.Visible = flying; _G.DownBtn.Visible = flying
+    flying = not flying
+    _G.UpBtn.Visible = flying
+    _G.DownBtn.Visible = flying
+
     if not flying and player.Character then 
-        for _,v in pairs(player.Character.HumanoidRootPart:GetChildren()) do if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then v:Destroy() end end
+        for _,v in pairs(player.Character.HumanoidRootPart:GetChildren()) do
+            if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then
+                v:Destroy()
+            end
+        end
         player.Character.Humanoid.PlatformStand = false 
     end
-    zorxNotif("Fly "..(flying and "ON" or "OFF")) 
+
+    zorxNotif("Fly "..(flying and "ON" or "OFF"))
+end)
+
+-- MUSIC KILL BUTTON (letakkan setelah Fly Mode selesai)
+addBtn("🎵 MUSIC KILL", zorxScroll, function()
+    killMusicOn = not killMusicOn
+    zorxNotif("Music Kill "..(killMusicOn and "ON" or "OFF"))
 end)
 
 local nameBox = Instance.new("TextBox", zorxScroll); nameBox.Size = UDim2.new(0.95,0,0,40); nameBox.PlaceholderText = "ZorxHUB"; nameBox.BackgroundColor3 = Color3.fromRGB(30,30,30); nameBox.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", nameBox)
@@ -275,6 +311,37 @@ addBtn("•Bang Name", dotContainer, function() setclipboard("Bang Name"); zorxN
 addBtn("📢 SEND STAFF MSG", staffScroll, function() SendStaffChat() end)
 addBtn("🛠️ INF YIELD", staffScroll, function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
 addBtn("🗑️ TONG SAMPAH", staffScroll, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man", true))() end)
+addBtn("⚡ FIX LAG", staffScroll, function()
+
+    -- Turunkan grafik
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+    -- Hapus efek berat
+    for _,v in pairs(game:GetDescendants()) do
+        if v:IsA("ParticleEmitter")
+        or v:IsA("Trail")
+        or v:IsA("Smoke")
+        or v:IsA("Fire")
+        or v:IsA("Sparkles") then
+            v.Enabled = false
+        end
+    end
+
+    -- Kurangi texture
+    for _,v in pairs(game:GetDescendants()) do
+        if v:IsA("Texture") or v:IsA("Decal") then
+            v.Transparency = 1
+        end
+    end
+
+    -- Matikan bayangan
+    game.Lighting.GlobalShadows = false
+    game.Lighting.FogEnd = 9e9
+    game.Lighting.Brightness = 1
+
+    zorxNotif("Fix Lag Aktif!")
+
+end)
 
 -- AIMLOCK UI
 local aimContainer = Instance.new("Frame", gui); aimContainer.Size = UDim2.new(0, 140, 0, 45); aimContainer.Position = UDim2.new(1, -150, 0, 15); aimContainer.BackgroundTransparency = 1
@@ -305,22 +372,61 @@ end)
 upBtn.MouseButton1Down:Connect(function() vDir = flySpeed end); upBtn.MouseButton1Up:Connect(function() vDir = 0 end)
 downBtn.MouseButton1Down:Connect(function() vDir = -flySpeed end); downBtn.MouseButton1Up:Connect(function() vDir = 0 end)
 
+-- DETECT PLAYER DEATH
+local function monitorPlayer(plr)
+    if plr == player then return end
+    
+    plr.CharacterAdded:Connect(function(char)
+        local hum = char:WaitForChild("Humanoid")
+        
+        hum.Died:Connect(function()
+            if killMusicOn then
+                playKillSound()
+            end
+        end)
+        
+    end)
+end
+
+-- MONITOR SEMUA PLAYER
+for _,p in pairs(game.Players:GetPlayers()) do
+    monitorPlayer(p)
+end
+
+game.Players.PlayerAdded:Connect(monitorPlayer)
+-- DI BAWAH INI baru RunService
 RunService.Heartbeat:Connect(function()
     local char = player.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
     local hum = char.Humanoid
 
+    -- ===== ANTI KELUAR MAP =====
+    if root.Position.Y < -50 then
+    local spawn = workspace:FindFirstChildWhichIsA("SpawnLocation")
+    if spawn then
+        root.CFrame = spawn.CFrame + Vector3.new(0,5,0)
+    else
+        root.CFrame = CFrame.new(0,100,0)
+    end
+    zorxNotif("Map Protection Activated!")
+end
+
+    -- kode fly & stick player tetap di sini
     if flying then
         local bv = root:FindFirstChild("FlyVel") or Instance.new("BodyVelocity", root); bv.Name = "FlyVel"
         local bg = root:FindFirstChild("FlyGyro") or Instance.new("BodyGyro", root); bg.Name = "FlyGyro"
         bv.MaxForce = Vector3.new(9e9, 9e9, 9e9); bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
         bg.CFrame = camera.CFrame
         bv.Velocity = (hum.MoveDirection * flySpeed) + Vector3.new(0, vDir, 0)
-        hum.PlatformStand = true; root.Velocity = Vector3.zero
+        hum.PlatformStand = true; root.AssemblyLinearVelocity = Vector3.zero
     end
-    
-    if flyInf then root.Velocity = camera.CFrame.LookVector * (hum.MoveDirection.Magnitude > 0 and 150 or 0) + Vector3.new(0, 1.5, 0) end
+
+    if flyInf then
+    root.AssemblyLinearVelocity =
+        camera.CFrame.LookVector * (hum.MoveDirection.Magnitude > 0 and 150 or 0)
+        + Vector3.new(0, 1.5, 0)
+end
 
     if stickTarget and stickTarget.Character and stickTarget.Character:FindFirstChild("HumanoidRootPart") then
         local tRoot = stickTarget.Character.HumanoidRootPart
@@ -336,34 +442,21 @@ RunService.RenderStepped:Connect(function()
     if aimlockOn and lockTarget and lockTarget.Parent and lockTarget.Parent:FindFirstChild("Humanoid") and lockTarget.Parent.Humanoid.Health > 0 then
         camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
     end
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            local char = v.Character
-            local isHero = false
-            if char:FindFirstChildOfClass("Highlight") and char:FindFirstChildOfClass("Highlight").Enabled then
-                for _, d in pairs(char:GetDescendants()) do if d:IsA("ParticleEmitter") and (d.Name:lower():find("serious") or d.Name:lower():find("hunter") or d.Name:lower():find("cyborg")) then isHero = true; break end end
-            end
-            if isHero then
-                if not knownHero[v] then knownHero[v] = true; zorxNotif(v.DisplayName .. " PENCET G! 😈") end
-                if _G.EspEnabled then
-                    if not activeESP[v] then
-                        activeESP[v] = { box = Drawing.new("Square"), label = Drawing.new("Text") }
-                        activeESP[v].box.Visible, activeESP[v].box.Color = true, Color3.new(1,0,0)
-                        activeESP[v].label.Visible, activeESP[v].label.Color, activeESP[v].label.Center = true, Color3.new(1,1,1), true
-                    end
-                    local pos, onScreen = camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
-                    if onScreen then
-                        activeESP[v].box.Position, activeESP[v].box.Size = Vector2.new(pos.X - 20, pos.Y - 30), Vector2.new(40, 60)
-                        activeESP[v].label.Position, activeESP[v].label.Text = Vector2.new(pos.X, pos.Y - 50), "[AWAKENING]"
-                        activeESP[v].box.Visible, activeESP[v].label.Visible = true, true
-                    else activeESP[v].box.Visible, activeESP[v].label.Visible = false, false end
-                end
-            else
-                knownHero[v] = nil
-                if activeESP[v] then activeESP[v].box:Remove(); activeESP[v].label:Remove(); activeESP[v] = nil end
-            end
-        end
-    end
 end)
 
 zorxNotif("STUCK RELEASE ADDED! 😈❌")
+
+player.CharacterAdded:Connect(function()
+    flying = false
+    flyInf = false
+    stickTarget = nil
+
+    if _G.UpBtn then
+        _G.UpBtn.Visible = false
+    end
+
+    if _G.DownBtn then
+        _G.DownBtn.Visible = false
+    end
+end)
+  
