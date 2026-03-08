@@ -1,5 +1,101 @@
--- [[ NANDA×ZORX HUB × STAFF EDITION: RED BLACK THEME ]] --
+-- [[ NANDA×ZORX HUB × STAFF EDITION: RED BLACK THEME - FULL LOADING SEQUENCE ]] --
+
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+
+-- ===== FUNCTION: DISPLAY IMAGE (OPTIONAL LOGO) =====
+local function showImage(imageId, duration, showLogo)
+    local blur = Instance.new("BlurEffect")
+    blur.Size = 0
+    blur.Parent = Lighting
+
+    local intro = Instance.new("ScreenGui")
+    intro.Name = "ZorxIntro"
+    intro.Parent = gui
+    intro.IgnoreGuiInset = true
+
+    local bg = Instance.new("ImageLabel")
+    bg.Parent = intro
+    bg.Size = UDim2.new(1,0,1,0)
+    bg.Position = UDim2.new(0,0,0,0)
+    bg.BackgroundTransparency = 1
+    bg.Image = "rbxassetid://"..imageId
+    bg.ScaleType = Enum.ScaleType.Stretch
+
+    local logo
+    local bar
+    if showLogo then
+        -- Logo Text
+        logo = Instance.new("TextLabel")
+        logo.Parent = bg
+        logo.Text = "ZORXHUB"
+        logo.Font = Enum.Font.GothamBlack
+        logo.TextScaled = true
+        logo.Size = UDim2.new(0,360,0,90)
+        logo.Position = UDim2.new(0.5,0,0.45,0)
+        logo.AnchorPoint = Vector2.new(0.5,0.5)
+        logo.BackgroundTransparency = 1
+        logo.TextTransparency = 1
+        logo.TextColor3 = Color3.fromRGB(255,255,255)
+        logo.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+        logo.TextStrokeTransparency = 0.3
+
+        -- Loading Bar Background
+        local barBG = Instance.new("Frame")
+        barBG.Parent = bg
+        barBG.Size = UDim2.new(0.3,0,0,6)
+        barBG.Position = UDim2.new(0.5,0,0.55,0)
+        barBG.AnchorPoint = Vector2.new(0.5,0.5)
+        barBG.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        barBG.BorderSizePixel = 0
+        local stroke = Instance.new("UIStroke")
+        stroke.Parent = barBG
+        stroke.Color = Color3.fromRGB(0,0,0)
+        stroke.Thickness = 2
+
+        -- Loading Bar
+        bar = Instance.new("Frame")
+        bar.Parent = barBG
+        bar.Size = UDim2.new(0,0,1,0)
+        bar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+        bar.BorderSizePixel = 0
+    end
+
+    -- ===== ANIMASI MASUK =====
+    TweenService:Create(blur, TweenInfo.new(0.4), {Size = 20}):Play()
+    if logo then
+        TweenService:Create(logo, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+    end
+    task.wait(0.2)
+
+    if bar then
+        TweenService:Create(bar, TweenInfo.new(duration), {Size = UDim2.new(1,0,1,0)}):Play()
+    end
+    task.wait(duration + 0.1)
+
+    -- ===== ANIMASI KELUAR =====
+    TweenService:Create(bg, TweenInfo.new(0.6), {ImageTransparency = 1}):Play()
+    if logo then
+        TweenService:Create(logo, TweenInfo.new(0.6), {TextTransparency = 1}):Play()
+    end
+    TweenService:Create(blur, TweenInfo.new(0.6), {Size = 0}):Play()
+    task.wait(0.8)
+
+    blur:Destroy()
+    intro:Destroy()
+end
+
+-- ===== TAMPILKAN BERURUTAN =====
+showImage("130831939013376", 1, false) -- Pertama cepat, tanpa logo
+showImage("75074794440403", 1, false)  -- Kedua cepat, tanpa logo
+showImage("114660803799468", 2, true)  -- Ketiga ZORXHUB loading screen
+
+-- ===== MASUK UI UTAMA ZORXHUB =====
+-- Contoh gabungkan script UI utama:
+-- createFixedLogo()
+-- zorxNotif("Welcome Back ZORXHUB😈")
 local TextChatService = game:GetService("TextChatService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -15,6 +111,28 @@ local stickTarget = nil
 local killMusicOn = false
 local killCooldown = false
 local killSoundId = "rbxassetid://117909139728666"
+
+-- AIMLOCK TARGET HIGHLIGHT
+local highlight
+
+local function applyHighlight(target)
+    if highlight then highlight:Destroy() end
+
+    highlight = Instance.new("Highlight")
+    highlight.Adornee = target.Parent
+    highlight.FillColor = Color3.fromRGB(255,0,0)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255,0,0)
+    highlight.OutlineTransparency = 0
+    highlight.Parent = game.CoreGui
+end
+
+local function removeHighlight()
+    if highlight then
+        highlight:Destroy()
+        highlight = nil
+    end
+end
 
 -- ===== 1. STAFF SYSTEM (TAG & MSG) =====
 TextChatService.OnIncomingMessage = function(message)
@@ -82,7 +200,7 @@ local function getTargetUnderCursor()
             local pos, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
             if onScreen then
                 local cursorDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
-                if cursorDist < shortestDist and cursorDist < 150 then
+                if cursorDist < shortestDist and cursorDist < 120 then
                     shortestDist = cursorDist; target = v.Character.HumanoidRootPart
                 end
             end
@@ -323,47 +441,69 @@ local downBtn = Instance.new("TextButton", gui); downBtn.Size = UDim2.new(0,60,0
 _G.UpBtn, _G.DownBtn = upBtn, downBtn
 
 -- ===== 4. ENGINE =====
-local function playKillSound()
-    if killCooldown then return end
-    killCooldown = true
+local function playKillSound(enemyRoot)
+	if killCooldown then return end
+	killCooldown = true
 
-    local char = player.Character
-    if not char then return end
+	local soundPart = Instance.new("Part")
+	soundPart.Anchored = true
+	soundPart.CanCollide = false
+	soundPart.Transparency = 1
+	soundPart.Position = enemyRoot.Position -- posisi di musuh
+	soundPart.Parent = workspace
 
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+	local sound = Instance.new("Sound")
+	sound.SoundId = killSoundId
+	sound.Volume = 3
+sound.RollOffMode = Enum.RollOffMode.Inverse
+sound.MaxDistance = 200
+sound.EmitterSize = 80
+	sound.Parent = soundPart
 
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://117909139728666"
-    sound.Volume = 10
-    sound.RollOffMode = Enum.RollOffMode.Inverse
-    sound.MaxDistance = 300
-    sound.EmitterSize = 80
-    sound.Parent = root
+	sound:Play()
+	game.Debris:AddItem(soundPart,5)
 
-    sound:Play()
-
-    game.Debris:AddItem(sound,5)
-
-    task.wait(0.3)
-    killCooldown = false
+	task.wait(0.3)
+	killCooldown = false
 end
 aimToggle.MouseButton1Click:Connect(function() aimlockBtn.Visible = not aimlockBtn.Visible; aimToggle.Text = aimlockBtn.Visible and "▢" or "_" end)
 aimlockBtn.MouseButton1Click:Connect(function()
-    aimlockOn = not aimlockOn
-    if aimlockOn then
-        lockTarget = getTargetUnderCursor()
-        if lockTarget then aimlockBtn.Text = "LOCKED"; aimlockBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); zorxNotif("Locked: "..lockTarget.Parent.Name)
-        else aimlockOn = false; zorxNotif("No Target!") end
-    else lockTarget = nil; aimlockBtn.Text = "AIM: OFF"; aimlockBtn.BackgroundColor3 = Color3.fromRGB(50, 0, 0) end
-end)
 
+    aimlockOn = not aimlockOn
+
+    if aimlockOn then
+
+        lockTarget = getTargetUnderCursor()
+
+        if lockTarget then
+            aimlockBtn.Text = "LOCKED"
+            aimlockBtn.BackgroundColor3 = Color3.fromRGB(150,0,0)
+
+            zorxNotif("Locked: "..lockTarget.Parent.Name)
+
+            applyHighlight(lockTarget)
+
+        else
+            aimlockOn = false
+            zorxNotif("No Target!")
+        end
+
+    else
+
+        lockTarget = nil
+        aimlockBtn.Text = "AIM: OFF"
+        aimlockBtn.BackgroundColor3 = Color3.fromRGB(50,0,0)
+
+        removeHighlight()
+
+    end
+
+end)
 upBtn.MouseButton1Down:Connect(function() vDir = flySpeed end); upBtn.MouseButton1Up:Connect(function() vDir = 0 end)
 downBtn.MouseButton1Down:Connect(function() vDir = -flySpeed end); downBtn.MouseButton1Up:Connect(function() vDir = 0 end)
--- NEW KILL MUSIC SYSTEM (UNIVERSAL)
+-- NEW KILL MUSIC SYSTEM FIX
 
 for _, plr in pairs(game.Players:GetPlayers()) do
-
     if plr ~= player then
 
         plr.CharacterAdded:Connect(function(char)
@@ -374,20 +514,15 @@ for _, plr in pairs(game.Players:GetPlayers()) do
 
                 if not killMusicOn then return end
 
-                local myChar = player.Character
-                if not myChar then return end
-
-                local myRoot = myChar:FindFirstChild("HumanoidRootPart")
                 local enemyRoot = char:FindFirstChild("HumanoidRootPart")
+                local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-                if myRoot and enemyRoot then
+                if enemyRoot and myRoot then
+                    local dist = (enemyRoot.Position - myRoot.Position).Magnitude
 
-                    local dist = (myRoot.Position - enemyRoot.Position).Magnitude
-
-                    if dist < 25 then
-                        playKillSound()
+                    if dist < 60 then
+                        playKillSound(enemyRoot)
                     end
-
                 end
 
             end)
@@ -395,43 +530,7 @@ for _, plr in pairs(game.Players:GetPlayers()) do
         end)
 
     end
-
-end     
-game.Players.PlayerAdded:Connect(function(plr)
-
-    if plr ~= player then
-
-        plr.CharacterAdded:Connect(function(char)
-
-            local hum = char:WaitForChild("Humanoid")
-
-            hum.Died:Connect(function()
-
-                if not killMusicOn then return end
-
-                local myChar = player.Character
-                if not myChar then return end
-
-                local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-                local enemyRoot = char:FindFirstChild("HumanoidRootPart")
-
-                if myRoot and enemyRoot then
-
-                    local dist = (myRoot.Position - enemyRoot.Position).Magnitude
-
-                    if dist < 25 then
-                        playKillSound()
-                    end
-
-                end
-
-            end)
-
-        end)
-
-    end
-
-end)
+end
     -- ===== ANTI KELUAR MAP =====
     RunService.RenderStepped:Connect(function()
 
@@ -504,9 +603,30 @@ end)
 
 end)
 RunService.RenderStepped:Connect(function()
-    if aimlockOn and lockTarget and lockTarget.Parent and lockTarget.Parent:FindFirstChild("Humanoid") and lockTarget.Parent.Humanoid.Health > 0 then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
+
+    if aimlockOn then
+
+        if not lockTarget
+        or not lockTarget.Parent
+        or not lockTarget.Parent:FindFirstChild("Humanoid")
+        or lockTarget.Parent.Humanoid.Health <= 0 then
+
+            lockTarget = getTargetUnderCursor()
+
+            if lockTarget then
+                applyHighlight(lockTarget)
+            else
+                removeHighlight()
+            end
+
+        end
+
+        if lockTarget then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
+        end
+
     end
+
 end)
 -- ===== LOGO PERMANEN FIX DI KIRI =====
 local function createFixedLogo()
@@ -541,16 +661,14 @@ end)
 end -- tutup function createFixedLogo
 
 createFixedLogo()
-player.CharacterAdded:Connect(function()
+player.CharacterAdded:Connect(function(char)
     flying = false
     flyInf = false
     stickTarget = nil
-    lockTarget = nil
-
+    -- lockTarget biarkan tetap sama
     if _G.UpBtn then _G.UpBtn.Visible = false end
     if _G.DownBtn then _G.DownBtn.Visible = false end
-
-    zorxNotif("Respawn detected")
+    zorxNotif("Respawn detected, aimlock tetap aktif!")
 end)
 
 zorxNotif("Welcome Back ZORXHUB😈")
