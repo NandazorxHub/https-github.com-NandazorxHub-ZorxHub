@@ -107,7 +107,6 @@ local aimlockOn = false
 local lockTarget = nil 
 local vDir = 0
 local flySpeed = 85
-local hubLocked = true
 local stickTarget = nil
 local killMusicOn = false
 local killCooldown = false
@@ -153,37 +152,44 @@ local function SendStaffChat()
 end
 
 -- ===== 2. NOTIFICATION SYSTEM =====
-local function bigCenterNotif()
-
-    local guiNotif = Instance.new("ScreenGui")
-    guiNotif.Parent = game.CoreGui
-
-    local frame = Instance.new("Frame", guiNotif)
-    frame.Size = UDim2.new(0,500,0,100)
-    frame.Position = UDim2.new(0.5,0,0.5,0)
-    frame.AnchorPoint = Vector2.new(0.5,0.5)
-    frame.BackgroundColor3 = Color3.fromRGB(10,10,10)
-
-    Instance.new("UICorner", frame)
-
+local function zorxNotif(msg)
+    local fullText = msg .. " | NZ HUB"
+    local notifGui = Instance.new("ScreenGui", player.PlayerGui)
+    
+    local frame = Instance.new("Frame", notifGui)
+    frame.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+    frame.Position = UDim2.new(0.5, 0, 0.2, 0)
+    frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    frame.BorderSizePixel = 0
+    
     local stroke = Instance.new("UIStroke", frame)
-    stroke.Color = Color3.fromRGB(255,0,0)
+    stroke.Color = Color3.fromRGB(255, 0, 0)
     stroke.Thickness = 2
-
-    local text = Instance.new("TextLabel", frame)
-    text.Size = UDim2.new(1,0,1,0)
-    text.BackgroundTransparency = 1
-    text.Text = "Nanda Tidak Mengizinkan Fitur ini 📌"
-    text.TextColor3 = Color3.fromRGB(255,255,255)
-    text.TextScaled = true
-    text.Font = Enum.Font.GothamBlack
-
-    task.wait(3)
-    text.Text = "Tunggu Sampai Di Hidupkan Kembali 🤡"
-
-    task.wait(3)
-    guiNotif:Destroy()
-
+    
+    local corner = Instance.new("UICorner", frame)
+    corner.CornerRadius = UDim.new(0, 6)
+    
+    local label = Instance.new("TextLabel", frame)
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Text = fullText
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.GothamBold
+    
+    local textSize = game:GetService("TextService"):GetTextSize(fullText, 14, Enum.Font.GothamBold, Vector2.new(600, 100))
+    frame.Size = UDim2.new(0, textSize.X + 40, 0, 40)
+    
+    frame.BackgroundTransparency = 1
+    label.TextTransparency = 1
+    stroke.Transparency = 1
+    game:GetService("TweenService"):Create(frame, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
+    game:GetService("TweenService"):Create(label, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+    game:GetService("TweenService"):Create(stroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
+    
+    task.delay(2.5, function()
+        if notifGui then notifGui:Destroy() end
+    end)
 end
 
 local function getTargetUnderCursor()
@@ -299,51 +305,19 @@ noteImage.ScaleType = Enum.ScaleType.Stretch
 noteImage.ZIndex = 5
 
 local function addBtn(txt, parent, cb)
-
     local b = Instance.new("TextButton", parent)
     b.Size = UDim2.new(0.95,0,0,45)
+    b.Text = txt
     b.BackgroundColor3 = Color3.fromRGB(25,25,25)
     b.BackgroundTransparency = 0.4
-    b.Text = ""
-    
+    b.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", b)
+    Instance.new("UIStroke", b).Color = Color3.fromRGB(100,0,0)
 
-    local stroke = Instance.new("UIStroke", b)
-    stroke.Color = Color3.fromRGB(100,0,0)
-
-    -- TEXT KIRI
-    local label = Instance.new("TextLabel", b)
-    label.Size = UDim2.new(1,-40,1,0)
-    label.Position = UDim2.new(0,10,0,0)
-    label.BackgroundTransparency = 1
-    label.Text = txt
-    label.TextColor3 = Color3.new(1,1,1)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- ICON KANAN
-    local lockIcon = Instance.new("TextLabel", b)
-    lockIcon.Size = UDim2.new(0,30,1,0)
-    lockIcon.Position = UDim2.new(1,-35,0,0)
-    lockIcon.BackgroundTransparency = 1
-    lockIcon.Text = hubLocked and "🔒" or "🔓"
-    lockIcon.TextScaled = true
-    lockIcon.Font = Enum.Font.GothamBold
-
-    b.MouseButton1Click:Connect(function()
-
-        if hubLocked then
-            bigCenterNotif()
-            return
-        end
-
-        zorxNotif(txt.." Activated")
-        cb()
-
-    end)
-
+    b.MouseButton1Click:Connect(cb)
+    return b
 end
+
 -- UI 1 FEATURES
 addBtn("🚀 FLY MODE", zorxScroll, function() 
     flying = not flying
