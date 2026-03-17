@@ -1,3 +1,9 @@
+-- [[ NANDA×ZORX HUB × STAFF EDITION: RED BLACK THEME - FULL LOADING SEQUENCE ]] --
+
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
 
 -- ===== MASUK UI UTAMA ZORXHUB =====
 -- Contoh gabungkan script UI utama:
@@ -117,10 +123,10 @@ local function getTargetUnderCursor()
 end
 
 -- ===== 3. UI SETUP =====
-local gui = Instance.new("ScreenGui")
-gui.Name = "NzkRedBlack"
-gui.ResetOnSpawn = false
-gui.Parent = game.CoreGui
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "NzkRedBlack"
+mainGui.ResetOnSpawn = false
+mainGui.Parent = game.CoreGui
 
 -- FPS + WIFI MONITOR
 local statsGui = Instance.new("ScreenGui", game.CoreGui)
@@ -149,7 +155,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- FRAME INDUK UI (nyatuin ketiga frame)
-local uiContainer = Instance.new("Frame", gui)
+local uiContainer = Instance.new("Frame", mainGui)
 uiContainer.Size = UDim2.new(0, 660, 0, 320) -- 220*3 lebar frame UI
 uiContainer.Position = UDim2.new(0.5, -330, 0.5, -150) -- tengah layar
 uiContainer.BackgroundTransparency = 1
@@ -173,11 +179,92 @@ local function createWindow(title, pos, isMain)
     local t = Instance.new("TextLabel", f); t.Size = UDim2.new(1,0,0,35); t.Text = title; t.TextColor3 = Color3.new(1,1,1); t.BackgroundColor3 = Color3.fromRGB(0,0,0); t.BackgroundTransparency = 1
 
     if isMain then
-        local discFrame = Instance.new("Frame", f); discFrame.Size = UDim2.new(1, -10, 0, 45); discFrame.Position = UDim2.new(0, 5, 0, 40); discFrame.BackgroundColor3 = Color3.fromRGB(40, 60, 160); Instance.new("UICorner", discFrame)
-        local discStroke = Instance.new("UIStroke", discFrame); discStroke.Color = Color3.fromRGB(114, 137, 218); discStroke.Thickness = 1
-        local discLink = Instance.new("TextButton", discFrame); discLink.Size = UDim2.new(1, 0, 1, 0); discLink.Text = "Support Discord:\ndiscord.gg/SrWXXsNaE"; discLink.TextColor3 = Color3.fromRGB(255, 255, 255); discLink.TextSize = 10; discLink.BackgroundTransparency = 1; discLink.Font = Enum.Font.GothamBold
-        discLink.MouseButton1Click:Connect(function() setclipboard("https://discord.gg/SrWXXsNaE"); zorxNotif("Discord Copied!") end)
+
+    local profileFrame = Instance.new("Frame", f)
+    profileFrame.Size = UDim2.new(1, -10, 0, 60)
+    profileFrame.Position = UDim2.new(0, 5, 0, 40)
+    profileFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    Instance.new("UICorner", profileFrame)
+local stroke = Instance.new("UIStroke", profileFrame)
+stroke.Color = Color3.fromRGB(255,0,0)
+stroke.Thickness = 1.5
+stroke.Transparency = 0.3
+
+    -- FOTO PROFILE
+    local avatar = Instance.new("ImageLabel", profileFrame)
+    local avatarCorner = Instance.new("UICorner", avatar)
+    avatarCorner.CornerRadius = UDim.new(1,0)
+    avatar.Size = UDim2.new(0,50,0,50)
+    avatar.Position = UDim2.new(0,10,0.5,-25)
+    avatar.BackgroundTransparency = 1
+
+    local userId = player.UserId
+    avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="
+        ..userId.."&width=420&height=420&format=png"
+
+-- HALO MERAH FIX (PAS BULAT)
+local halo = Instance.new("Frame", profileFrame)
+halo.Size = avatar.Size -- sama persis avatar
+halo.Position = avatar.Position -- tepat nempel
+halo.BackgroundTransparency = 1
+halo.ZIndex = avatar.ZIndex + 1
+
+local haloCorner = Instance.new("UICorner", halo)
+haloCorner.CornerRadius = UDim.new(1,0)
+
+local haloStroke = Instance.new("UIStroke", halo)
+haloStroke.Color = Color3.fromRGB(255,0,0)
+haloStroke.Thickness = 2
+haloStroke.Transparency = 0.3
+
+-- ROTASI HALUS
+task.spawn(function()
+    local rot = 0
+    while halo.Parent do
+        rot += 2
+        halo.Rotation = rot
+        task.wait()
     end
+end)
+task.spawn(function()
+    while halo.Parent do
+        haloStroke.Transparency = 0.1
+        task.wait(0.5)
+        haloStroke.Transparency = 0.5
+        task.wait(0.5)
+    end
+end)
+
+    -- NAMA PLAYER
+    local nameLabel = Instance.new("TextLabel", profileFrame)
+    nameLabel.Size = UDim2.new(1,-70,0.5,0)
+    nameLabel.Position = UDim2.new(0,80,0,5)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.DisplayName
+    nameLabel.TextColor3 = Color3.new(1,1,1)
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 14
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- USERNAME
+    local userLabel = Instance.new("TextLabel", profileFrame)
+    userLabel.Size = UDim2.new(1,-70,0.5,0)
+    userLabel.Position = UDim2.new(0,80,0.5,-5)
+    userLabel.BackgroundTransparency = 1
+    userLabel.Text = "@"..player.Name
+    userLabel.TextColor3 = Color3.fromRGB(180,180,180)
+    userLabel.Font = Enum.Font.Gotham
+    userLabel.TextSize = 12
+    userLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local logo = Instance.new("ImageLabel", profileFrame)
+logo.Size = UDim2.new(0,40,0,40)
+logo.Position = UDim2.new(1,-50,0.5,-20)
+logo.BackgroundTransparency = 1
+logo.Image = "rbxassetid://71597722112744"
+logo.ZIndex = 10
+
+
+end
     
     local s = Instance.new("ScrollingFrame", f); s.Size = UDim2.new(1,-10,1,-110); s.Position = UDim2.new(0,5,0,105); s.BackgroundTransparency = 1; s.CanvasSize = UDim2.new(0,0,3.5,0); s.ScrollBarThickness = 2
     if not isMain then s.Size = UDim2.new(1,-10,1,-50); s.Position = UDim2.new(0,5,0,40) end
@@ -193,7 +280,7 @@ emoFrame.BackgroundColor3  = Color3.fromRGB(0, 40, 40)
 staffFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 0)
 
 -- NOTE FRAME
-local noteFrame = Instance.new("Frame", gui)
+local noteFrame = Instance.new("Frame", mainGui)
 noteFrame.Size = UDim2.new(0, 220, 0, 50)
 noteFrame.Position = UDim2.new(0.5, 120, 0.5, -205)
 noteFrame.BackgroundTransparency = 1
@@ -228,9 +315,11 @@ end
 -- UI 1 FEATURES
 addBtn("🚀 FLY MODE", zorxScroll, function() 
     flying = not flying
+
+    stickTarget = nil 
+
     _G.UpBtn.Visible = flying
     _G.DownBtn.Visible = flying
-
     if not flying and player.Character then 
         for _,v in pairs(player.Character.HumanoidRootPart:GetChildren()) do
             if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then
@@ -268,17 +357,31 @@ end)
 addBtn("🎲 Teleport Random", zorxScroll, function()
     local allPlayers = game.Players:GetPlayers()
     local otherPlayers = {}
+
     for _, p in pairs(allPlayers) do
-        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        if p ~= player 
+        and p.Character 
+        and p.Character:FindFirstChild("HumanoidRootPart") 
+        and p.Character.Humanoid.Health > 0 then
             table.insert(otherPlayers, p)
         end
     end
+
     if #otherPlayers > 0 then
         local target = otherPlayers[math.random(1, #otherPlayers)]
-        stickTarget = target
-        player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3.5)
-        zorxNotif("Random TP to: " .. target.DisplayName)
-    else zorxNotif("No target found!") end
+
+        stickTarget = target -- 🔥 penting biar langsung nempel
+
+        local root = player.Character.HumanoidRootPart
+        local tRoot = target.Character.HumanoidRootPart
+
+        root.CFrame = tRoot.CFrame * CFrame.new(0,0,3.5)
+        player.Character.Humanoid.PlatformStand = true
+
+        zorxNotif("Random Stick: " .. target.DisplayName)
+    else
+        zorxNotif("No target found!")
+    end
 end)
 
 -- ===== [NEW] LEPAS TELEPORT FEATURE =====
@@ -305,8 +408,17 @@ addBtn("•Bang Name", dotContainer, function() setclipboard("Bang Name"); zorxN
 addBtn("📢 SEND STAFF MSG", staffScroll, function() SendStaffChat() end)
 addBtn("🛠️ INF YIELD", staffScroll, function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
 addBtn("🗑️ TONG SAMPAH", staffScroll, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man", true))() end)
-addBtn("⚡ FIX LAG", staffScroll, function()
 
+-- 🔥 AUTO APPLY FIX LAG SAAT SCRIPT DIJALANKAN
+task.spawn(function()
+    task.wait(1)
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
+end)
+
+-- FIX LAG PERMANEN
+local function applyFixLag()
     -- Turunkan grafik
     settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
 
@@ -328,23 +440,41 @@ addBtn("⚡ FIX LAG", staffScroll, function()
         end
     end
 
-    -- Matikan bayangan
+    -- Lighting
     game.Lighting.GlobalShadows = false
     game.Lighting.FogEnd = 9e9
     game.Lighting.Brightness = 1
-
+end
+addBtn("⚡ FIX LAG", staffScroll, function()
+    applyFixLag()
     zorxNotif("Fix Lag Aktif!")
-
 end)
 
 -- AIMLOCK UI
-local aimContainer = Instance.new("Frame", gui); aimContainer.Size = UDim2.new(0, 140, 0, 45); aimContainer.Position = UDim2.new(1, -150, 0, 15); aimContainer.BackgroundTransparency = 1
+local aimContainer = Instance.new("Frame", mainGui) aimContainer.Size = UDim2.new(0, 140, 0, 45); aimContainer.Position = UDim2.new(1, -150, 0, 15); aimContainer.BackgroundTransparency = 1
 local aimlockBtn = Instance.new("TextButton", aimContainer); aimlockBtn.Size = UDim2.new(0, 100, 1, 0); aimlockBtn.Text = "AIM: OFF"; aimlockBtn.BackgroundColor3 = Color3.fromRGB(50, 0, 0); aimlockBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", aimlockBtn); Instance.new("UIStroke", aimlockBtn).Color = Color3.fromRGB(200,0,0)
 local aimToggle = Instance.new("TextButton", aimContainer); aimToggle.Size = UDim2.new(0, 35, 0, 35); aimToggle.Position = UDim2.new(0, 105, 0, 5); aimToggle.Text = "▢"; aimToggle.BackgroundColor3 = Color3.fromRGB(10, 10, 10); aimToggle.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", aimToggle); Instance.new("UIStroke", aimToggle).Color = Color3.fromRGB(200,0,0)
 
 -- FLY BUTTONS
-local upBtn = Instance.new("TextButton", gui); upBtn.Size = UDim2.new(0,60,0,60); upBtn.Position = UDim2.new(1,-80, 0.4, 0); upBtn.Text = "UP"; upBtn.Visible = false; upBtn.BackgroundColor3 = Color3.fromRGB(20,20,20); upBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", upBtn); Instance.new("UIStroke", upBtn).Color = Color3.fromRGB(255,0,0)
-local downBtn = Instance.new("TextButton", gui); downBtn.Size = UDim2.new(0,60,0,60); downBtn.Position = UDim2.new(1,-80, 0.52, 0); downBtn.Text = "DOWN"; downBtn.Visible = false; downBtn.BackgroundColor3 = Color3.fromRGB(20,20,20); downBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", downBtn); Instance.new("UIStroke", downBtn).Color = Color3.fromRGB(255,0,0)
+local upBtn = Instance.new("TextButton", mainGui)
+upBtn.Size = UDim2.new(0,60,0,60)
+upBtn.Position = UDim2.new(1,-80, 0.4, 0)
+upBtn.Text = "UP"
+upBtn.Visible = false
+upBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+upBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", upBtn)
+Instance.new("UIStroke", upBtn).Color = Color3.fromRGB(255,0,0)
+
+local downBtn = Instance.new("TextButton", mainGui)
+downBtn.Size = UDim2.new(0,60,0,60)
+downBtn.Position = UDim2.new(1,-80, 0.52, 0)
+downBtn.Text = "DOWN"
+downBtn.Visible = false
+downBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+downBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", downBtn)
+Instance.new("UIStroke", downBtn).Color = Color3.fromRGB(255,0,0)
 _G.UpBtn, _G.DownBtn = upBtn, downBtn
 
 -- ===== 4. ENGINE =====
@@ -479,34 +609,51 @@ end
         root.AssemblyLinearVelocity = Vector3.zero
     end
 
+-- 🔥 AUTO RELEASE SAAT FLY INF (WAJIB)
+if flyInf and stickTarget then
+    stickTarget = nil
+    hum.PlatformStand = false
+    zorxNotif("Stick Released (Fly INF)")
+end
 
-    -- ===== FLY INF =====
-    if flyInf then
-        root.AssemblyLinearVelocity =
-            camera.CFrame.LookVector *
-            (hum.MoveDirection.Magnitude > 0 and 150 or 0)
-            + Vector3.new(0,1.5,0)
+-- ===== FLY INF =====
+if flyInf then
+    root.AssemblyLinearVelocity =
+        camera.CFrame.LookVector *
+        (hum.MoveDirection.Magnitude > 0 and 150 or 0)
+        + Vector3.new(0,1.5,0)
+end
+
+-- ===== STICK PLAYER (SUPER STABLE FIX) =====
+if stickTarget and stickTarget.Character and stickTarget.Character:FindFirstChild("HumanoidRootPart") then
+
+    local tRoot = stickTarget.Character.HumanoidRootPart
+    local distance = (root.Position - tRoot.Position).Magnitude
+
+    if stickTarget.Character.Humanoid.Health <= 0 then
+        stickTarget = nil
+        hum.PlatformStand = false
+        zorxNotif("Target Down!")
+
+    elseif distance > 80 then
+        -- 🔥 TARIK BALIK (ANTI LEPAS)
+        root.CFrame = tRoot.CFrame * CFrame.new(0,0,3.5)
+
+    else
+        local targetCFrame = tRoot.CFrame * CFrame.new(0,0,3.5)
+
+        -- 🔥 SMOOTH BIAR GAK KAKU
+        root.CFrame = root.CFrame:Lerp(targetCFrame, 0.6)
+
+        -- 🔥 MATIIN FISIKA
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        root.Velocity = Vector3.zero
+
+        hum.PlatformStand = true
     end
 
-
-    -- ===== STICK PLAYER =====
-    if stickTarget and stickTarget.Character and stickTarget.Character:FindFirstChild("HumanoidRootPart") then
-
-        local tRoot = stickTarget.Character.HumanoidRootPart
-
-        if (root.Position - tRoot.Position).Magnitude > 20
-        or stickTarget.Character.Humanoid.Health <= 0 then
-
-            stickTarget = nil
-            hum.PlatformStand = false
-            zorxNotif("Auto-Release!")
-
-        else
-            root.CFrame = tRoot.CFrame * CFrame.new(0,0,3.5)
-            hum.PlatformStand = true
-        end
-
-    end
+end
 
 end)
 RunService.RenderStepped:Connect(function()
@@ -572,10 +719,15 @@ player.CharacterAdded:Connect(function(char)
     flying = false
     flyInf = false
     stickTarget = nil
-    -- lockTarget biarkan tetap sama
+
     if _G.UpBtn then _G.UpBtn.Visible = false end
     if _G.DownBtn then _G.DownBtn.Visible = false end
+
+    -- 🔥 TAMBAHAN INI (PENTING BANGET)
+    task.wait(1)
+    applyFixLag()
+
     zorxNotif("Respawn detected, aimlock tetap aktif!")
 end)
 
-zorxNotif("Welcome Back ZORXHUB😈")
+zorxNotif("Welcome Back ZORXHUBv3😈")
