@@ -104,7 +104,7 @@ local function zorxNotif(msg)
     game:GetService("TweenService"):Create(label, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
     game:GetService("TweenService"):Create(stroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
     
-    task.delay(2.5, function()
+    task.delay(12.5, function()
         if notifGui then notifGui:Destroy() end
     end)
 end
