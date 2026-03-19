@@ -3,7 +3,44 @@
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local player = game.Players.LocalPlayer
-local gui = player:WaitForChild("PlayerGui")
+
+-- 🔥 TAMBAHIN DI SINI
+local function zorxNotif(text, duration)
+    duration = duration or 4
+
+    local notifGui = Instance.new("ScreenGui")
+    notifGui.Parent = game.CoreGui
+    notifGui.ResetOnSpawn = false
+
+    local frame = Instance.new("Frame", notifGui)
+    frame.Size = UDim2.new(0, 300, 0, 50)
+    frame.Position = UDim2.new(1, -320, 1, -80)
+    frame.BackgroundColor3 = Color3.fromRGB(20,0,0)
+    frame.BackgroundTransparency = 0.2
+
+    Instance.new("UICorner", frame)
+
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Color = Color3.fromRGB(255,0,0)
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1,-10,1,-10)
+    label.Position = UDim2.new(0,5,0,5)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.GothamBold
+    label.TextScaled = true
+
+    frame.Position = UDim2.new(1, 300, 1, -80)
+    frame:TweenPosition(UDim2.new(1, -320, 1, -80), "Out", "Quad", 0.3, true)
+
+    task.delay(duration, function()
+        frame:TweenPosition(UDim2.new(1, 300, 1, -80), "In", "Quad", 0.3, true)
+        task.wait(0.3)
+        notifGui:Destroy()
+    end)
+end
 
 -- ===== MASUK UI UTAMA ZORXHUB =====
 -- Contoh gabungkan script UI utama:
@@ -31,17 +68,29 @@ local speedForce
 
 -- AIMLOCK TARGET HIGHLIGHT
 local highlight
-
 local function applyHighlight(target)
-    if highlight then highlight:Destroy() end
+    if not target then return end
+
+    local character = target:FindFirstAncestorOfClass("Model")
+    if not character then return end
+
+    -- Kalau sama target, gak usah bikin baru
+    if highlight and highlight.Adornee == character then
+        return
+    end
+
+    if highlight then
+        highlight:Destroy()
+    end
 
     highlight = Instance.new("Highlight")
-    highlight.Adornee = target.Parent
+    highlight.Adornee = character
     highlight.FillColor = Color3.fromRGB(255,0,0)
-    highlight.FillTransparency = 0.5
+    highlight.FillTransparency = 0.25
     highlight.OutlineColor = Color3.fromRGB(255,0,0)
     highlight.OutlineTransparency = 0
-    highlight.Parent = game.CoreGui
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- 🔥 biar tembus tembok
+    highlight.Parent = workspace -- 🔥 WAJIB (fix utama)
 end
 
 local function removeHighlight()
@@ -843,8 +892,9 @@ RunService.RenderStepped:Connect(function()
         end
 
         if lockTarget then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
-        end
+    applyHighlight(lockTarget) -- 🔥 TAMBAHIN INI
+    camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
+end
 
     end
 
