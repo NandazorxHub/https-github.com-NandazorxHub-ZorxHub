@@ -24,6 +24,10 @@ local stickTarget = nil
 local killMusicOn = false
 local killCooldown = false
 local killSoundId = "rbxassetid://117909139728666"
+local fixLagOn = false
+local speedOn = false
+local speedValue = 16
+local speedForce 
 
 -- AIMLOCK TARGET HIGHLIGHT
 local highlight
@@ -273,30 +277,11 @@ end
 
 local zorxFrame, zorxScroll = createWindow("ZorxHUB", UDim2.new(0,0,0,0), true)
 local emoFrame, emoScroll = createWindow("Emoticon", UDim2.new(0,220,0,0), false)
-local staffFrame, staffScroll = createWindow("STAFF TOOLS", UDim2.new(0,440,0,0), false)
+local staffFrame, staffScroll = createWindow("Tols", UDim2.new(0,440,0,0), false)
 
 zorxFrame.BackgroundColor3 = Color3.fromRGB(40, 0, 40)
 emoFrame.BackgroundColor3  = Color3.fromRGB(0, 40, 40)
 staffFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 0)
-
--- NOTE FRAME
-local noteFrame = Instance.new("Frame", mainGui)
-noteFrame.Size = UDim2.new(0, 220, 0, 50)
-noteFrame.Position = UDim2.new(0.5, 120, 0.5, -205)
-noteFrame.BackgroundTransparency = 1
-noteFrame.Visible = true
-Instance.new("UICorner", noteFrame)
-
--- ===== UI NOTE DI ATAS STAFF TOOLS =====
-local noteStroke = Instance.new("UIStroke", noteFrame); noteStroke.Color = Color3.fromRGB(255, 0, 0); noteStroke.Thickness = 1
-
-local noteImage = Instance.new("ImageLabel", noteFrame)
-noteImage.Size = UDim2.new(1,0,1,0)
-noteImage.Position = UDim2.new(0,0,0,0)
-noteImage.BackgroundTransparency = 1
-noteImage.Image = "rbxassetid://85462255439341"
-noteImage.ScaleType = Enum.ScaleType.Stretch
-noteImage.ZIndex = 5
 
 local function addBtn(txt, parent, cb)
     local b = Instance.new("TextButton", parent)
@@ -409,46 +394,268 @@ addBtn("📢 SEND STAFF MSG", staffScroll, function() SendStaffChat() end)
 addBtn("🛠️ INF YIELD", staffScroll, function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
 addBtn("🗑️ TONG SAMPAH", staffScroll, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man", true))() end)
 
--- 🔥 AUTO APPLY FIX LAG SAAT SCRIPT DIJALANKAN
-task.spawn(function()
-    task.wait(1)
-    pcall(function()
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+-- CONTAINER SPEED UI
+local speedFrame = Instance.new("Frame", staffScroll)
+speedFrame.Size = UDim2.new(0.95,0,0,140)
+speedFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+speedFrame.BackgroundTransparency = 0.3
+Instance.new("UICorner", speedFrame)
+
+-- TEXTBOX SPEED
+local speedBox = Instance.new("TextBox", speedFrame)
+speedBox.Size = UDim2.new(1,-10,0,35)
+speedBox.Position = UDim2.new(0,5,0,5)
+speedBox.PlaceholderText = "Set Speed (16 - 2000)"
+speedBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+speedBox.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", speedBox)
+
+-- PILIHAN CEPAT (PRESET)
+local presetFrame = Instance.new("Frame", speedFrame)
+presetFrame.Size = UDim2.new(1,-10,0,35)
+presetFrame.Position = UDim2.new(0,5,0,45)
+presetFrame.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", presetFrame)
+layout.FillDirection = Enum.FillDirection.Horizontal
+layout.Padding = UDim.new(0,5)
+
+local presets = {50, 100, 200, 500}
+
+for _,v in pairs(presets) do
+    local btn = Instance.new("TextButton", presetFrame)
+    btn.Size = UDim2.new(0.23,0,1,0)
+    btn.Text = tostring(v)
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", btn)
+
+    btn.MouseButton1Click:Connect(function()
+        speedBox.Text = tostring(v)
     end)
-end)
-
--- FIX LAG PERMANEN
-local function applyFixLag()
-    -- Turunkan grafik
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-
-    -- Hapus efek berat
-    for _,v in pairs(game:GetDescendants()) do
-        if v:IsA("ParticleEmitter")
-        or v:IsA("Trail")
-        or v:IsA("Smoke")
-        or v:IsA("Fire")
-        or v:IsA("Sparkles") then
-            v.Enabled = false
-        end
-    end
-
-    -- Kurangi texture
-    for _,v in pairs(game:GetDescendants()) do
-        if v:IsA("Texture") or v:IsA("Decal") then
-            v.Transparency = 1
-        end
-    end
-
-    -- Lighting
-    game.Lighting.GlobalShadows = false
-    game.Lighting.FogEnd = 9e9
-    game.Lighting.Brightness = 1
 end
-addBtn("⚡ FIX LAG", staffScroll, function()
-    applyFixLag()
-    zorxNotif("Fix Lag Aktif!")
+
+-- BUTTON ENTER (APPLY)
+local enterBtn = Instance.new("TextButton", speedFrame)
+enterBtn.Size = UDim2.new(0.48,0,0,35)
+enterBtn.Position = UDim2.new(0.02,0,1,-40)
+enterBtn.Text = "ENTER"
+enterBtn.BackgroundColor3 = Color3.fromRGB(40,0,0)
+enterBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", enterBtn)
+
+-- BUTTON STOP (RESET)
+local stopBtn = Instance.new("TextButton", speedFrame)
+stopBtn.Size = UDim2.new(0.48,0,0,35)
+stopBtn.Position = UDim2.new(0.5,0,1,-40)
+stopBtn.Text = "STOP"
+stopBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+stopBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", stopBtn)
+
+-- APPLY SPEED
+enterBtn.MouseButton1Click:Connect(function()
+    local val = tonumber(speedBox.Text)
+
+    if val then
+        if val > 2000 then val = 2000 end
+        if val < 16 then val = 16 end
+
+        speedValue = val
+        speedOn = true
+
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = speedValue
+        end
+
+        zorxNotif("Speed: "..speedValue)
+    else
+        zorxNotif("Invalid Number!")
+    end
 end)
+
+-- STOP SPEED
+stopBtn.MouseButton1Click:Connect(function()
+    speedOn = false
+
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = 16
+    end
+
+    zorxNotif("Speed Reset!")
+end)
+
+addBtn("⚡ FIX LAG", staffScroll, function()
+    fixLagOn = not fixLagOn
+
+    zorxNotif("Fix Lag "..(fixLagOn and "ON" or "OFF"))
+
+    -- APPLY BERULANG (INI KUNCI NYA)
+    task.spawn(function()
+    for i = 1,5 do
+        applyFixLag(fixLagOn)
+        task.wait(0.3)
+    end
+end)
+
+end)
+
+-- FIX LAG SUPER EXTREME (PALING NGARUH)
+local connectionFix
+
+local function safeDestroy(obj)
+    if obj then
+        pcall(function()
+            obj:Destroy()
+        end)
+    end
+end
+
+local function applyFixLag(state)
+
+    if connectionFix then
+        connectionFix:Disconnect()
+        connectionFix = nil
+    end
+
+    if state then
+        -- 🔥 PAKSA ENGINE JADI RINGAN BANGET
+        pcall(function()
+            sethiddenproperty(Lighting, "Technology", Enum.Technology.Compatibility)
+        end)
+
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 0.5
+
+        -- 🔥 MATIIN SEMUA EFFECT
+        for _,v in pairs(Lighting:GetChildren()) do
+            if v:IsA("PostEffect") then
+                v.Enabled = false
+            end
+        end
+
+        -- 🔥 AIR JADI RINGAN
+        if workspace:FindFirstChildOfClass("Terrain") then
+            local t = workspace.Terrain
+            t.WaterWaveSize = 0
+            t.WaterWaveSpeed = 0
+            t.WaterReflectance = 0
+            t.WaterTransparency = 1
+        end
+
+        -- 🔥 BERSIHIN MAP TOTAL
+        for _,v in pairs(workspace:GetDescendants()) do
+
+            if v:IsA("BasePart") then
+                v.Material = Enum.Material.SmoothPlastic
+                v.Reflectance = 0
+                v.CastShadow = false
+            end
+
+            if v:IsA("Decal") or v:IsA("Texture") then
+                safeDestroy(v)
+            end
+
+            if v:IsA("ParticleEmitter")
+            or v:IsA("Trail")
+            or v:IsA("Smoke")
+            or v:IsA("Fire")
+            or v:IsA("Sparkles") then
+                safeDestroy(v)
+            end
+
+            -- 🌲 HAPUS POHON + RUMPUT
+            if v:IsA("MeshPart") or v:IsA("UnionOperation") then
+                local name = v.Name:lower()
+
+                if name:find("tree")
+                or name:find("leaf")
+                or name:find("bush")
+                or name:find("grass")
+                or name:find("plant") then
+                    safeDestroy(v)
+                end
+            end
+
+            if v:IsA("Model") then
+                local name = v.Name:lower()
+
+                if name:find("tree")
+                or name:find("bush")
+                or name:find("plant") then
+                    safeDestroy(v)
+                end
+            end
+        end
+
+        -- 🔥 AUTO HANDLE OBJECT BARU
+        connectionFix = workspace.DescendantAdded:Connect(function(v)
+
+            if v:IsA("BasePart") then
+                v.Material = Enum.Material.SmoothPlastic
+                v.Reflectance = 0
+                v.CastShadow = false
+            end
+
+            if v:IsA("Decal") or v:IsA("Texture") then
+                v:Destroy()
+            end
+
+            if v:IsA("ParticleEmitter")
+            or v:IsA("Trail")
+            or v:IsA("Smoke")
+            or v:IsA("Fire")
+            or v:IsA("Sparkles") then
+                v:Destroy()
+            end
+
+            -- 🌲 AUTO DELETE POHON
+            if v:IsA("MeshPart") or v:IsA("UnionOperation") then
+                local name = v.Name:lower()
+
+                if name:find("tree")
+                or name:find("leaf")
+                or name:find("bush")
+                or name:find("grass")
+                or name:find("plant") then
+                    v:Destroy()
+                end
+            end
+
+            if v:IsA("Model") then
+                local name = v.Name:lower()
+
+                if name:find("tree")
+                or name:find("bush")
+                or name:find("plant") then
+                    v:Destroy()
+                end
+            end
+
+        end)
+
+    else
+        -- 🔄 BALIK NORMAL
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+
+        Lighting.GlobalShadows = true
+        Lighting.Brightness = 2
+
+        for _,v in pairs(Lighting:GetChildren()) do
+            if v:IsA("PostEffect") then
+                v.Enabled = true
+            end
+        end
+
+        if connectionFix then
+            connectionFix:Disconnect()
+            connectionFix = nil
+        end
+    end
+end
 
 -- AIMLOCK UI
 local aimContainer = Instance.new("Frame", mainGui) aimContainer.Size = UDim2.new(0, 140, 0, 45); aimContainer.Position = UDim2.new(1, -150, 0, 15); aimContainer.BackgroundTransparency = 1
@@ -478,6 +685,14 @@ Instance.new("UIStroke", downBtn).Color = Color3.fromRGB(255,0,0)
 _G.UpBtn, _G.DownBtn = upBtn, downBtn
 
 -- ===== 4. ENGINE =====
+player.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+
+    if speedOn then
+        hum.WalkSpeed = speedValue
+    end
+end)
+
 local function playKillSound(enemyRoot)
 	if killCooldown then return end
 	killCooldown = true
@@ -682,12 +897,62 @@ RunService.RenderStepped:Connect(function()
     end
 
 end)
+
+-- 🔥 SPEED SYSTEM REALTIME (FIX CLEAN)
+local lockY = nil
+
+RunService.RenderStepped:Connect(function()
+    if not speedOn then 
+        if speedForce then
+            speedForce:Destroy()
+            speedForce = nil
+        end
+        lockY = nil
+        return 
+    end
+
+    local char = player.Character
+    if not char then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    if not root or not hum then return end
+
+    if not speedForce then
+        speedForce = Instance.new("BodyVelocity")
+        speedForce.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        speedForce.Parent = root
+    end
+
+    -- 🔒 SIMPAN KETINGGIAN AWAL
+    if not lockY then
+        lockY = root.Position.Y
+    end
+
+    local moveDir = hum.MoveDirection
+
+    if moveDir.Magnitude > 0 then
+        speedForce.Velocity = (moveDir * speedValue)
+    else
+        speedForce.Velocity = Vector3.zero
+    end
+
+    -- 🔥 KUNCI Y (ANTI JATUH & ANTI NEMBUS)
+    root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
+    root.CFrame = CFrame.new(root.Position.X, lockY, root.Position.Z)
+end)
+
 -- ===== LOGO PERMANEN FIX DI KIRI =====
+local logoVisible = true
+local logoGui
+
 local function createFixedLogo()
+    if game.CoreGui:FindFirstChild("ZorxLogoGui") then
+        logoGui = game.CoreGui:FindFirstChild("ZorxLogoGui")
+        return
+    end
 
-    if game.CoreGui:FindFirstChild("ZorxLogoGui") then return end
-
-    local logoGui = Instance.new("ScreenGui")
+    logoGui = Instance.new("ScreenGui")
     logoGui.Name = "ZorxLogoGui"
     logoGui.Parent = game.CoreGui
     logoGui.ResetOnSpawn = false
@@ -695,39 +960,39 @@ local function createFixedLogo()
     local logo = Instance.new("ImageButton")
     logo.Parent = logoGui
     logo.Size = UDim2.new(0,50,0,50)
-    logo.Position = UDim2.new(0,10,0.5,-25)
+    logo.Position = UDim2.new(0,10,0.5,-25) 
     logo.BackgroundTransparency = 1
     logo.Image = "rbxassetid://120640380150905"
     logo.ZIndex = 999
 
+    -- Klik logo untuk toggle guiContainer
     logo.MouseButton1Click:Connect(function()
-
-    if uiContainer and uiContainer.Parent then
-        uiContainer.Visible = not uiContainer.Visible
-    end
-
-    if noteFrame and noteFrame.Parent then
-        noteFrame.Visible = not noteFrame.Visible
-    end
-
+    logoVisible = not logoVisible
+    
+    uiContainer.Visible = logoVisible
+    
+    -- statsGui tetap muncul, tidak ikut ke-hide
 end)
 
-end -- tutup function createFixedLogo
+end
 
 createFixedLogo()
-player.CharacterAdded:Connect(function(char)
-    flying = false
-    flyInf = false
-    stickTarget = nil
 
-    if _G.UpBtn then _G.UpBtn.Visible = false end
-    if _G.DownBtn then _G.DownBtn.Visible = false end
-
-    -- 🔥 TAMBAHAN INI (PENTING BANGET)
-    task.wait(1)
-    applyFixLag()
-
-    zorxNotif("Respawn detected, aimlock tetap aktif!")
+-- 🔥 FORCE FIX LAG SAAT GAME BARU MASUK
+task.spawn(function()
+    while task.wait(5) do
+        if fixLagOn then
+            applyFixLag(true)
+        end
+    end
 end)
 
-zorxNotif("Welcome Back ZORXHUBv3😈")
+zorxNotif("Welcome Back ZorxHUBVIP3 😈", 11)
+
+task.delay(4, function()
+    zorxNotif("Trial 2 Day Activated 🔥", 8)
+end)
+
+task.delay(7.5, function()
+    zorxNotif("VIP5K ORDER ADMIN ⏳", 9)
+end)
