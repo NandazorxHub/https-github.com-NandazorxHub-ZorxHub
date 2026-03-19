@@ -987,12 +987,12 @@ task.spawn(function()
     end
 end)
 
-zorxNotif("Welcome Back ZorxHUBVIP3 😈", 11)
+zorxNotif("ZorxHUB", 11)
 
 task.delay(4, function()
-    zorxNotif("Trial 2 Day Activated 🔥", 8)
+    zorxNotif("Selamat Datang Kembali Tuan", 8)
 end)
 
 task.delay(7.5, function()
-    zorxNotif("VIP5K ORDER ADMIN ⏳", 9)
+    zorxNotif("Panel All ready for Admin", 9)
 end)
