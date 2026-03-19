@@ -95,108 +95,102 @@ local function SendStaffChat()
     if channel then channel:SendAsync("[STAFF]" .. msg) end
 end
 
--- ===== NOTIFICATION SYSTEM V3 (BOT STYLE + RANDOM EMOJI) =====
-local notifQueue = {}
+-- ===== NOTIFICATION SYSTEM V4 (SLOW + SINGLE VIEW) =====
 local notifBusy = false
 
 local expressions = {
-    "^_^", ">_<", "O_O", "-_-", "UwU", ":v", "😈", "👀", "🤖", "🔥"
+    "^_^", ">_<", "O_O", "-_-", "UwU", ":v", "(〇o〇；)", "凸( •̀_•́ )凸", "(´O｀)", "(´◦ω◦`)", "<⁠(⁠￣⁠︶⁠￣⁠)⁠>"
 }
 
 local function zorxNotif(msg, duration)
     duration = duration or 4
 
-    table.insert(notifQueue, {msg = msg, time = duration})
-
+    -- kalau masih jalan, skip biar gak numpuk
     if notifBusy then return end
     notifBusy = true
 
-    while #notifQueue > 0 do
-        local data = table.remove(notifQueue, 1)
+    -- RANDOM EXPRESI
+    local exp = expressions[math.random(1, #expressions)]
+    local fullText = msg .. "   | " .. exp
 
-        -- 🔥 RANDOM EXPRESI
-        local exp = expressions[math.random(1, #expressions)]
-        local fullText = data.msg .. "   | " .. exp
+    local notifGui = Instance.new("ScreenGui")
+    notifGui.Parent = game.CoreGui
+    notifGui.IgnoreGuiInset = true
 
-        local notifGui = Instance.new("ScreenGui")
-        notifGui.Parent = game.CoreGui
-        notifGui.IgnoreGuiInset = true
+    local frame = Instance.new("Frame", notifGui)
+    frame.AnchorPoint = Vector2.new(0.5, 0)
+    frame.Position = UDim2.new(0.5, 0, -0.2, 0)
+    frame.Size = UDim2.new(0, 0, 0, 45)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame)
 
-        local frame = Instance.new("Frame", notifGui)
-        frame.AnchorPoint = Vector2.new(0.5, 0)
-        frame.Position = UDim2.new(0.5, 0, -0.1, 0)
-        frame.Size = UDim2.new(0, 0, 0, 40)
-        frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-        frame.BackgroundTransparency = 0.2
-        frame.BorderSizePixel = 0
-        Instance.new("UICorner", frame)
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Color = Color3.fromRGB(255, 0, 0)
+    stroke.Thickness = 2
+    stroke.Transparency = 1
 
-        local stroke = Instance.new("UIStroke", frame)
-        stroke.Color = Color3.fromRGB(255, 0, 0)
-        stroke.Thickness = 2
-        stroke.Transparency = 1
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = fullText
+    label.TextColor3 = Color3.fromRGB(255,255,255)
+    label.TextTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 15
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.TextYAlignment = Enum.TextYAlignment.Center
 
-        local label = Instance.new("TextLabel", frame)
-        label.Size = UDim2.new(1, 0, 1, 0) -- 🔥 FULL BIAR CENTER PAS
-        label.Position = UDim2.new(0, 0, 0, 0)
-        label.BackgroundTransparency = 1
-        label.Text = fullText
-        label.TextColor3 = Color3.fromRGB(255,255,255)
-        label.TextTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 14
+    -- AUTO SIZE
+    local textSize = game:GetService("TextService"):GetTextSize(
+        fullText, 15, Enum.Font.GothamBold, Vector2.new(600, 50)
+    )
+    local targetSize = textSize.X + 100
 
-        -- 🔥 CENTER FIX
-        label.TextXAlignment = Enum.TextXAlignment.Center
-        label.TextYAlignment = Enum.TextYAlignment.Center
+    -- 🔥 MASUK (LEBIH SLOW & SMOOTH)
+    frame:TweenSize(
+        UDim2.new(0, targetSize, 0, 45),
+        Enum.EasingDirection.Out,
+        Enum.EasingStyle.Quart,
+        0.5,
+        true
+    )
 
-        -- AUTO SIZE
-        local textSize = game:GetService("TextService"):GetTextSize(
-            fullText, 14, Enum.Font.GothamBold, Vector2.new(600, 50)
-        )
-        local targetSize = textSize.X + 80
+    TweenService:Create(frame, TweenInfo.new(0.6), {
+        Position = UDim2.new(0.5, 0, 0.15, 0)
+    }):Play()
 
-        -- MASUK
-        frame:TweenSize(
-            UDim2.new(0, targetSize, 0, 40),
-            Enum.EasingDirection.Out,
-            Enum.EasingStyle.Quad,
-            0.25,
-            true
-        )
+    TweenService:Create(label, TweenInfo.new(0.5), {
+        TextTransparency = 0
+    }):Play()
 
-        TweenService:Create(frame, TweenInfo.new(0.35), {
-            Position = UDim2.new(0.5, 0, 0.18, 0) -- 🔥 TURUNIN DIKIT LAGI
-        }):Play()
+    TweenService:Create(stroke, TweenInfo.new(0.5), {
+        Transparency = 0
+    }):Play()
 
-        TweenService:Create(label, TweenInfo.new(0.3), {
-            TextTransparency = 0
-        }):Play()
+    -- TAHAN LEBIH LAMA
+    task.wait(duration)
 
-        TweenService:Create(stroke, TweenInfo.new(0.3), {
-            Transparency = 0
-        }):Play()
+    -- 🔥 KELUAR (HALUS)
+    TweenService:Create(frame, TweenInfo.new(0.5), {
+        Position = UDim2.new(0.5, 0, -0.2, 0),
+        BackgroundTransparency = 1
+    }):Play()
 
-        task.wait(data.time)
+    TweenService:Create(label, TweenInfo.new(0.4), {
+        TextTransparency = 1
+    }):Play()
 
-        -- KELUAR
-        TweenService:Create(frame, TweenInfo.new(0.3), {
-            Position = UDim2.new(0.5, 0, -0.1, 0),
-            BackgroundTransparency = 1
-        }):Play()
+    TweenService:Create(stroke, TweenInfo.new(0.4), {
+        Transparency = 1
+    }):Play()
 
-        TweenService:Create(label, TweenInfo.new(0.25), {
-            TextTransparency = 1
-        }):Play()
+    task.wait(0.6)
+    notifGui:Destroy()
 
-        TweenService:Create(stroke, TweenInfo.new(0.25), {
-            Transparency = 1
-        }):Play()
-
-        task.wait(0.35)
-        notifGui:Destroy()
-        task.wait(0.1)
-    end
+    -- jeda biar gak terlalu cepat
+    task.wait(0.3)
 
     notifBusy = false
 end
