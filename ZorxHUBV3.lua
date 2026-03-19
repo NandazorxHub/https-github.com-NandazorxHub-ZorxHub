@@ -51,6 +51,33 @@ local function removeHighlight()
     end
 end
 
+local function getTargetUnderCursor()
+    local closest = nil
+    local shortest = math.huge
+
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            
+            local hum = v.Character:FindFirstChild("Humanoid")
+            if hum and hum.Health > 0 then
+
+                local pos, visible = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+
+                if visible then
+                    local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
+
+                    if dist < shortest then
+                        shortest = dist
+                        closest = v.Character.HumanoidRootPart
+                    end
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
 -- ===== 1. STAFF SYSTEM (TAG & MSG) =====
 TextChatService.OnIncomingMessage = function(message)
     local properties = Instance.new("TextChatMessageProperties")
