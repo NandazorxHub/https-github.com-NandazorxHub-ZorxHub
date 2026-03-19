@@ -963,8 +963,11 @@ local function createFixedLogo()
     logo.Size = UDim2.new(0,50,0,50)
     logo.Position = UDim2.new(0,10,0.5,-25) 
     logo.BackgroundTransparency = 1
-    logo.Image = "rbxassetid://120640380150905"
+    logo.Image = "rbxassetid://107066160608098"
     logo.ZIndex = 999
+     
+    local corner = Instance.new("UICorner", logo)
+    corner.CornerRadius = UDim.new(0, 12) 
 
     -- Klik logo untuk toggle guiContainer
     logo.MouseButton1Click:Connect(function()
