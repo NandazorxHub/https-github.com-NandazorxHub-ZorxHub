@@ -987,7 +987,7 @@ task.spawn(function()
     end
 end)
 
-zorxNotif("Welcome Back ZorxHUBVIP3 😈", 17)
+zorxNotif("Welcome Back ZorxHUBVIP3 😈", 23)
 
 task.delay(4, function()
     zorxNotif("Trial 2 Day Activated 🔥", 8)
