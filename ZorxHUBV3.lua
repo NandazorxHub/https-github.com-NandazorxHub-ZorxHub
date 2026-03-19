@@ -68,62 +68,101 @@ local function SendStaffChat()
     if channel then channel:SendAsync("[STAFF]" .. msg) end
 end
 
--- ===== 2. NOTIFICATION SYSTEM =====
-local function zorxNotif(msg)
-    local fullText = msg .. " | NZ HUB"
-    local notifGui = Instance.new("ScreenGui", player.PlayerGui)
-    
-    local frame = Instance.new("Frame", notifGui)
-    frame.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-    frame.Position = UDim2.new(0.5, 0, 0.2, 0)
-    frame.AnchorPoint = Vector2.new(0.5, 0.5)
-    frame.BorderSizePixel = 0
-    
-    local stroke = Instance.new("UIStroke", frame)
-    stroke.Color = Color3.fromRGB(255, 0, 0)
-    stroke.Thickness = 2
-    
-    local corner = Instance.new("UICorner", frame)
-    corner.CornerRadius = UDim.new(0, 6)
-    
-    local label = Instance.new("TextLabel", frame)
-    label.BackgroundTransparency = 1
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.Text = fullText
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 14
-    label.Font = Enum.Font.GothamBold
-    
-    local textSize = game:GetService("TextService"):GetTextSize(fullText, 14, Enum.Font.GothamBold, Vector2.new(600, 100))
-    frame.Size = UDim2.new(0, textSize.X + 40, 0, 40)
-    
-    frame.BackgroundTransparency = 1
-    label.TextTransparency = 1
-    stroke.Transparency = 1
-    game:GetService("TweenService"):Create(frame, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
-    game:GetService("TweenService"):Create(label, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
-    game:GetService("TweenService"):Create(stroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
-    
-    task.delay(2.5, function()
-        if notifGui then notifGui:Destroy() end
-    end)
-end
+-- ===== NOTIFICATION SYSTEM V2 (SMOOTH + STACK FIX) =====
+local notifQueue = {}
+local notifBusy = false
 
-local function getTargetUnderCursor()
-    local shortestDist = math.huge
-    local target = nil
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
-            local pos, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-            if onScreen then
-                local cursorDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
-                if cursorDist < shortestDist and cursorDist < 120 then
-                    shortestDist = cursorDist; target = v.Character.HumanoidRootPart
-                end
-            end
-        end
+local function zorxNotif(msg, duration)
+    duration = duration or 4
+
+    table.insert(notifQueue, {msg = msg, time = duration})
+
+    if notifBusy then return end
+    notifBusy = true
+
+    while #notifQueue > 0 do
+        local data = table.remove(notifQueue, 1)
+        local fullText = data.msg .. " NANDA👑"
+
+        local notifGui = Instance.new("ScreenGui")
+        notifGui.Parent = game.CoreGui
+        notifGui.IgnoreGuiInset = true
+
+        local frame = Instance.new("Frame", notifGui)
+        frame.AnchorPoint = Vector2.new(0.5, 0)
+        frame.Position = UDim2.new(0.5, 0, -0.1, 0) -- 🔥 dari atas (off screen)
+        frame.Size = UDim2.new(0, 0, 0, 40)
+        frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        frame.BackgroundTransparency = 0.2
+        frame.BorderSizePixel = 0
+
+        Instance.new("UICorner", frame)
+
+        local stroke = Instance.new("UIStroke", frame)
+        stroke.Color = Color3.fromRGB(255, 0, 0)
+        stroke.Thickness = 2
+        stroke.Transparency = 1
+
+        local label = Instance.new("TextLabel", frame)
+        label.Size = UDim2.new(1, -20, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = fullText
+        label.TextColor3 = Color3.fromRGB(255,255,255)
+        label.TextTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 14
+        label.TextXAlignment = Enum.TextXAlignment.Left
+
+        -- AUTO SIZE
+        local textSize = game:GetService("TextService"):GetTextSize(
+            fullText, 14, Enum.Font.GothamBold, Vector2.new(600, 50)
+        )
+        local targetSize = textSize.X + 60
+
+        -- 🔥 MASUK (SLIDE + FADE)
+        frame:TweenSize(
+            UDim2.new(0, targetSize, 0, 40),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.25,
+            true
+        )
+
+        TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Quad), {
+            Position = UDim2.new(0.5, 0, 0.15, 0)
+        }):Play()
+
+        TweenService:Create(label, TweenInfo.new(0.3), {
+            TextTransparency = 0
+        }):Play()
+
+        TweenService:Create(stroke, TweenInfo.new(0.3), {
+            Transparency = 0
+        }):Play()
+
+        task.wait(data.time)
+
+        -- 🔥 KELUAR (NAIK + FADE)
+        TweenService:Create(frame, TweenInfo.new(0.3), {
+            Position = UDim2.new(0.5, 0, -0.1, 0),
+            BackgroundTransparency = 1
+        }):Play()
+
+        TweenService:Create(label, TweenInfo.new(0.25), {
+            TextTransparency = 1
+        }):Play()
+
+        TweenService:Create(stroke, TweenInfo.new(0.25), {
+            Transparency = 1
+        }):Play()
+
+        task.wait(0.35)
+        notifGui:Destroy()
+        task.wait(0.1)
     end
-    return target
+
+    notifBusy = false
 end
 
 -- ===== 3. UI SETUP =====
@@ -987,12 +1026,6 @@ task.spawn(function()
     end
 end)
 
-zorxNotif("ZorxHUB", 11)
-
-task.delay(4, function()
-    zorxNotif("Selamat Datang Kembali Tuan", 8)
-end)
-
-task.delay(7.5, function()
-    zorxNotif("Panel All ready for Admin", 9)
-end)
+zorxNotif("ZorxHUB", 8)
+zorxNotif("Selamat Datang Kembali Tuan", 7)
+zorxNotif("Panel All ready for Admin", 7)
