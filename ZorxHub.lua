@@ -51,80 +51,31 @@ local function removeHighlight()
     end
 end
 
--- ===== 1. STAFF SYSTEM (TAG & MSG) =====
-TextChatService.OnIncomingMessage = function(message)
-    local properties = Instance.new("TextChatMessageProperties")
-    if message.Text:sub(1, 7) == "[STAFF]" then
-        properties.PrefixText = "<font color='#FF0000'>[STAFF]</font> " .. message.PrefixText
-        properties.Text = message.Text:sub(8)
-    end
-    return properties
-end
+local function getTargetUnderCursor()
+    local closest = nil
+    local shortest = math.huge
 
-local function SendStaffChat()
-    local staffTexts = {"Server monitoring active.", "Checking for unusual activity.", "Staff monitoring: Clear."}
-    local msg = staffTexts[math.random(1, #staffTexts)]
-    local channel = TextChatService:FindFirstChild("TextChannels") and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
-    if channel then channel:SendAsync("[STAFF]" .. msg) end
-end
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            
+            local hum = v.Character:FindFirstChild("Humanoid")
+            if hum and hum.Health > 0 then
 
--- ===== 2. NOTIFICATION SYSTEM =====
-local notifBusy = false
-local notifQueue = {}
+                local pos, visible = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
 
-local function zorxNotif(msg, duration)
-    duration = duration or 5
+                if visible then
+                    local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
 
-    table.insert(notifQueue, {msg = msg, time = duration})
-
-    if notifBusy then return end
-    notifBusy = true
-
-    while #notifQueue > 0 do
-        local data = table.remove(notifQueue, 1)
-
-        local fullText = data.msg .. " | NZ HUB"
-        local notifGui = Instance.new("ScreenGui", player.PlayerGui)
-        
-        local frame = Instance.new("Frame", notifGui)
-        frame.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-        frame.Position = UDim2.new(0.5, 0, 0.2, 0)
-        frame.AnchorPoint = Vector2.new(0.5, 0.5)
-        frame.BorderSizePixel = 0
-        
-        local stroke = Instance.new("UIStroke", frame)
-        stroke.Color = Color3.fromRGB(255, 0, 0)
-        stroke.Thickness = 2
-        
-        local corner = Instance.new("UICorner", frame)
-        corner.CornerRadius = UDim.new(0, 6)
-        
-        local label = Instance.new("TextLabel", frame)
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.Text = fullText
-        label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        label.TextSize = 14
-        label.Font = Enum.Font.GothamBold
-        
-        local textSize = game:GetService("TextService"):GetTextSize(fullText, 14, Enum.Font.GothamBold, Vector2.new(600, 100))
-        frame.Size = UDim2.new(0, textSize.X + 40, 0, 40)
-        
-        frame.BackgroundTransparency = 1
-        label.TextTransparency = 1
-        stroke.Transparency = 1
-
-        game:GetService("TweenService"):Create(frame, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
-        game:GetService("TweenService"):Create(label, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
-        game:GetService("TweenService"):Create(stroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
-
-        task.wait(data.time)
-
-        notifGui:Destroy()
-        task.wait(0.3) -- jarak halus antar notif
+                    if dist < shortest then
+                        shortest = dist
+                        closest = v.Character.HumanoidRootPart
+                    end
+                end
+            end
+        end
     end
 
-    notifBusy = false
+    return closest
 end
 
 -- ===== 3. UI SETUP =====
