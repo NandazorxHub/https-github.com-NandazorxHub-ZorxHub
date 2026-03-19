@@ -30,18 +30,32 @@ local speedValue = 16
 local speedForce 
 
 -- AIMLOCK TARGET HIGHLIGHT
-local highlight
-
 local function applyHighlight(target)
-    if highlight then highlight:Destroy() end
+    removeHighlight() -- bersihin dulu biar gak numpuk
+
+    if not target or not target.Parent then return end
+
+    local character = target.Parent
+    if not character:IsA("Model") then return end
 
     highlight = Instance.new("Highlight")
-    highlight.Adornee = target.Parent
-    highlight.FillColor = Color3.fromRGB(255,0,0)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = Color3.fromRGB(255,0,0)
+    highlight.Name = "AimlockHighlight"
+    
+    -- 🔥 INI YANG PENTING
+    highlight.Adornee = character
+    
+    -- WARNA MERAH JELAS
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.FillTransparency = 0.3
+    
+    highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
     highlight.OutlineTransparency = 0
-    highlight.Parent = game.CoreGui
+
+    -- 🔥 FIX BIAR SELALU KELIATAN
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+    -- 🔥 PARENT KE CHARACTER (LEBIH STABIL)
+    highlight.Parent = character
 end
 
 local function removeHighlight()
@@ -236,7 +250,7 @@ local bg = Instance.new("ImageLabel", uiContainer)
 bg.Size = UDim2.new(1,0,1,0)
 bg.Position = UDim2.new(0,0,0,0)
 bg.BackgroundTransparency = 1
-bg.Image = "rbxassetid://92711712804896"
+bg.Image = "rbxassetid://114983181713467"
 bg.ScaleType = Enum.ScaleType.Stretch
 bg.ZIndex = -1
 
@@ -960,10 +974,13 @@ RunService.RenderStepped:Connect(function()
         end
 
         if lockTarget then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
-        end
+    camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
 
+    -- 🔥 AUTO FIX HIGHLIGHT
+    if not highlight or highlight.Adornee ~= lockTarget.Parent then
+        applyHighlight(lockTarget)
     end
+end
 
 end)
 
