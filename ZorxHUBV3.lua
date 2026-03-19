@@ -68,9 +68,13 @@ local function SendStaffChat()
     if channel then channel:SendAsync("[STAFF]" .. msg) end
 end
 
--- ===== NOTIFICATION SYSTEM V2 (SMOOTH + STACK FIX) =====
+-- ===== NOTIFICATION SYSTEM V3 (BOT STYLE + RANDOM EMOJI) =====
 local notifQueue = {}
 local notifBusy = false
+
+local expressions = {
+    "^_^", ">_<", "O_O", "-_-", "UwU", ":v", "😈", "👀", "🤖", "🔥"
+}
 
 local function zorxNotif(msg, duration)
     duration = duration or 4
@@ -82,7 +86,10 @@ local function zorxNotif(msg, duration)
 
     while #notifQueue > 0 do
         local data = table.remove(notifQueue, 1)
-        local fullText = data.msg .. "    | ^_^"
+
+        -- 🔥 RANDOM EXPRESI
+        local exp = expressions[math.random(1, #expressions)]
+        local fullText = data.msg .. "   | " .. exp
 
         local notifGui = Instance.new("ScreenGui")
         notifGui.Parent = game.CoreGui
@@ -90,12 +97,11 @@ local function zorxNotif(msg, duration)
 
         local frame = Instance.new("Frame", notifGui)
         frame.AnchorPoint = Vector2.new(0.5, 0)
-        frame.Position = UDim2.new(0.5, 0, -0.1, 0) -- 🔥 dari atas (off screen)
+        frame.Position = UDim2.new(0.5, 0, -0.1, 0)
         frame.Size = UDim2.new(0, 0, 0, 40)
         frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
         frame.BackgroundTransparency = 0.2
         frame.BorderSizePixel = 0
-
         Instance.new("UICorner", frame)
 
         local stroke = Instance.new("UIStroke", frame)
@@ -104,23 +110,26 @@ local function zorxNotif(msg, duration)
         stroke.Transparency = 1
 
         local label = Instance.new("TextLabel", frame)
-        label.Size = UDim2.new(1, -20, 1, 0)
-        label.Position = UDim2.new(0, 10, 0, 0)
+        label.Size = UDim2.new(1, 0, 1, 0) -- 🔥 FULL BIAR CENTER PAS
+        label.Position = UDim2.new(0, 0, 0, 0)
         label.BackgroundTransparency = 1
         label.Text = fullText
         label.TextColor3 = Color3.fromRGB(255,255,255)
         label.TextTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.TextSize = 14
-        label.TextXAlignment = Enum.TextXAlignment.Left
+
+        -- 🔥 CENTER FIX
+        label.TextXAlignment = Enum.TextXAlignment.Center
+        label.TextYAlignment = Enum.TextYAlignment.Center
 
         -- AUTO SIZE
         local textSize = game:GetService("TextService"):GetTextSize(
             fullText, 14, Enum.Font.GothamBold, Vector2.new(600, 50)
         )
-        local targetSize = textSize.X + 60
+        local targetSize = textSize.X + 80
 
-        -- 🔥 MASUK (SLIDE + FADE)
+        -- MASUK
         frame:TweenSize(
             UDim2.new(0, targetSize, 0, 40),
             Enum.EasingDirection.Out,
@@ -129,8 +138,8 @@ local function zorxNotif(msg, duration)
             true
         )
 
-        TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Quad), {
-            Position = UDim2.new(0.5, 0, 0.15, 0)
+        TweenService:Create(frame, TweenInfo.new(0.35), {
+            Position = UDim2.new(0.5, 0, 0.18, 0) -- 🔥 TURUNIN DIKIT LAGI
         }):Play()
 
         TweenService:Create(label, TweenInfo.new(0.3), {
@@ -143,7 +152,7 @@ local function zorxNotif(msg, duration)
 
         task.wait(data.time)
 
-        -- 🔥 KELUAR (NAIK + FADE)
+        -- KELUAR
         TweenService:Create(frame, TweenInfo.new(0.3), {
             Position = UDim2.new(0.5, 0, -0.1, 0),
             BackgroundTransparency = 1
