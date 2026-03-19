@@ -987,21 +987,20 @@ task.spawn(function()
     end
 end)
 
-zorxNotif("Welcome Back ZorxHUBVIP3 😈", 29)
+zorxNotif("Welcome Back ZorxHUBVIP3 😈", 10)
 
-task.delay(4.9, function()
-    zorxNotif("TRIAL: 2 hari 2 jam 30 menit ⏳", 14)
+task.delay(10.5, function()
+    zorxNotif("TRIAL: 2 hari 2 jam 30 menit ⏳", 11)
 end)
 
-task.delay(7.5, function()
-    zorxNotif("VIP5K ORDER ADMIN 🔥", 14)
+task.delay(17, function()
+    zorxNotif("VIP5K ORDER ADMIN 🔥", 10)
 end)
 
--- Tambah notifikasi berikutnya
-task.delay(11, function()
-    zorxNotif("Have Fun and Enjoy VIP Features 🎉", 9)
+task.delay(23.5, function()
+    zorxNotif("Have Fun and Enjoy VIP Features 🎉", 7)
 end)
 
-task.delay(14.5, function()
-    zorxNotif("Check Out New Updates 🔥", 8)
+task.delay(29, function()
+    zorxNotif("Check Out New Updates 🔥", 9)
 end)
