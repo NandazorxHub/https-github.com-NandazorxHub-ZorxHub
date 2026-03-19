@@ -5,41 +5,96 @@ local Lighting = game:GetService("Lighting")
 local player = game.Players.LocalPlayer
 
 -- 🔥 TAMBAHIN DI SINI
+local notifBusy = false
+local notifQueue = {}
+
 local function zorxNotif(text, duration)
     duration = duration or 4
 
-    local notifGui = Instance.new("ScreenGui")
-    notifGui.Parent = game.CoreGui
-    notifGui.ResetOnSpawn = false
+    table.insert(notifQueue, {text = text, dur = duration})
 
-    local frame = Instance.new("Frame", notifGui)
-    frame.Size = UDim2.new(0, 300, 0, 50)
-    frame.Position = UDim2.new(1, -320, 1, -80)
-    frame.BackgroundColor3 = Color3.fromRGB(20,0,0)
-    frame.BackgroundTransparency = 0.2
+    if notifBusy then return end
+    notifBusy = true
 
-    Instance.new("UICorner", frame)
+    while #notifQueue > 0 do
+        local data = table.remove(notifQueue, 1)
 
-    local stroke = Instance.new("UIStroke", frame)
-    stroke.Color = Color3.fromRGB(255,0,0)
+        local notifGui = Instance.new("ScreenGui")
+        notifGui.Parent = game.CoreGui
+        notifGui.ResetOnSpawn = false
 
-    local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(1,-10,1,-10)
-    label.Position = UDim2.new(0,5,0,5)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.new(1,1,1)
-    label.Font = Enum.Font.GothamBold
-    label.TextScaled = true
+        local frame = Instance.new("Frame", notifGui)
+        frame.AnchorPoint = Vector2.new(0.5, 0.5)
+        frame.Position = UDim2.new(0.5, 0, 0.25, -20) -- 🔥 tengah agak atas
+        frame.BackgroundColor3 = Color3.fromRGB(20,0,0)
+        frame.BackgroundTransparency = 1
+        frame.BorderSizePixel = 0
 
-    frame.Position = UDim2.new(1, 300, 1, -80)
-    frame:TweenPosition(UDim2.new(1, -320, 1, -80), "Out", "Quad", 0.3, true)
+        local stroke = Instance.new("UIStroke", frame)
+        stroke.Color = Color3.fromRGB(255,0,0)
+        stroke.Thickness = 2
+        stroke.Transparency = 1
 
-    task.delay(duration, function()
-        frame:TweenPosition(UDim2.new(1, 300, 1, -80), "In", "Quad", 0.3, true)
-        task.wait(0.3)
+        Instance.new("UICorner", frame)
+
+        local label = Instance.new("TextLabel", frame)
+        label.Size = UDim2.new(1,0,1,0)
+        label.BackgroundTransparency = 1
+        label.Text = data.text
+        label.TextColor3 = Color3.new(1,1,1)
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 14
+        label.TextTransparency = 1
+
+        -- AUTO SIZE
+        local textSize = game:GetService("TextService"):GetTextSize(
+            data.text,
+            14,
+            Enum.Font.GothamBold,
+            Vector2.new(600,100)
+        )
+
+        frame.Size = UDim2.new(0, textSize.X + 50, 0, 45)
+
+        local TweenService = game:GetService("TweenService")
+
+        -- 🔥 MASUK (SLOW SMOOTH)
+        TweenService:Create(frame, TweenInfo.new(0.5), {
+            BackgroundTransparency = 0.2
+        }):Play()
+
+        TweenService:Create(label, TweenInfo.new(0.5), {
+            TextTransparency = 0
+        }):Play()
+
+        TweenService:Create(stroke, TweenInfo.new(0.5), {
+            Transparency = 0
+        }):Play()
+
+        -- sedikit delay biar kerasa smooth
+        task.wait(data.dur)
+
+        -- 🔥 KELUAR
+        TweenService:Create(frame, TweenInfo.new(0.5), {
+            BackgroundTransparency = 1
+        }):Play()
+
+        TweenService:Create(label, TweenInfo.new(0.5), {
+            TextTransparency = 1
+        }):Play()
+
+        TweenService:Create(stroke, TweenInfo.new(0.5), {
+            Transparency = 1
+        }):Play()
+
+        task.wait(0.5)
         notifGui:Destroy()
-    end)
+
+        -- jeda antar notif biar gak tabrakan
+        task.wait(0.3)
+    end
+
+    notifBusy = false
 end
 
 -- ===== MASUK UI UTAMA ZORXHUB =====
