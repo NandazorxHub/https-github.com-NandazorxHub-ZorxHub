@@ -82,7 +82,7 @@ local function zorxNotif(msg, duration)
 
     while #notifQueue > 0 do
         local data = table.remove(notifQueue, 1)
-        local fullText = data.msg .. " NandaHUB👑"
+        local fullText = data.msg .. "| 👑"
 
         local notifGui = Instance.new("ScreenGui")
         notifGui.Parent = game.CoreGui
@@ -1026,6 +1026,6 @@ task.spawn(function()
     end
 end)
 
-zorxNotif("ZorxHUB", 8)
+zorxNotif("NandaHUB👑", 8)
 zorxNotif("Selamat Datang Kembali Tuan", 7)
 zorxNotif("Panel All ready for Admin", 7)
