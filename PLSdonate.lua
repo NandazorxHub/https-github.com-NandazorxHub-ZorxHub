@@ -17,7 +17,7 @@ counterGui.Name = "TopCounter"
 local frameCounter = Instance.new("Frame", counterGui)
 frameCounter.AnchorPoint = Vector2.new(1, 0)
 frameCounter.Position = UDim2.new(1, -20, 0, -39)
-frameCounter.Size = UDim2.new(0, 150, 0, 44)
+frameCounter.Size = UDim2.new(0, 95, 0, 44)
 frameCounter.BackgroundColor3 = Color3.fromRGB(255,255,255)
 frameCounter.BorderSizePixel = 0
 Instance.new("UICorner", frameCounter).CornerRadius = UDim.new(1,0)
@@ -29,43 +29,54 @@ iconBg.BackgroundColor3 = Color3.fromRGB(255, 0, 120)
 iconBg.BorderSizePixel = 0
 Instance.new("UICorner", iconBg).CornerRadius = UDim.new(1,0)
 
-local icon = Instance.new("TextLabel", iconBg)
-icon.Size = UDim2.new(1,1,1,1)
+local icon = Instance.new("ImageLabel", iconBg)
+icon.Size = UDim2.new(1,0,1,0)
 icon.BackgroundTransparency = 1
-icon.Text = "$"
-icon.TextColor3 = Color3.new(1,1,1)
-icon.TextScaled = true
-icon.Font = Enum.Font.GothamBold
+icon.Image = "rbxassetid://83381326989495"
+icon.ScaleType = Enum.ScaleType.Fit
 
 local amount = Instance.new("TextLabel", frameCounter)
-amount.Size = UDim2.new(0, 70, 1, 0)
-amount.Position = UDim2.new(0.5, -35, 0, 0)
-amount.BackgroundTransparency = 1
 amount.Text = "0"
+amount.Size = UDim2.new(0, 35, 1, 0)
+amount.Position = UDim2.new(0, 40, 0, 0)
+amount.BackgroundTransparency = 1
+amount.TextSize = 20
 amount.TextColor3 = Color3.fromRGB(255, 0, 120)
-amount.TextScaled = true
+amount.TextScaled = false
 amount.Font = Enum.Font.GothamBlack
-amount.TextXAlignment = Enum.TextXAlignment.Center
+amount.TextXAlignment = Enum.TextXAlignment.Left
 amount.TextYAlignment = Enum.TextYAlignment.Center
 
-local plusBg = Instance.new("Frame", frameCounter)
-plusBg.Size = UDim2.new(0, 30, 0, 30)
-plusBg.Position = UDim2.new(1, -37, 0.5, -15)
-plusBg.BackgroundColor3 = Color3.fromRGB(255, 0, 120)
-plusBg.BorderSizePixel = 0
-Instance.new("UICorner", plusBg).CornerRadius = UDim.new(1,0)
+-- FORMAT ANGKA TANPA TITIK
+local function formatCounterNumber(num)
+    return tostring(num)
+end
 
-local plus = Instance.new("TextLabel", plusBg)
-plus.Size = UDim2.new(1,1,1,1)
-plus.BackgroundTransparency = 1
-plus.Text = "+"
-plus.TextColor3 = Color3.new(1,1,1)
-plus.TextScaled = true
-plus.Font = Enum.Font.GothamBold
+local maxWidth = 140 -- maksimal lebar counter
+
+function updateCounter(value)
+    totalEarned += value
+    amount.Text = formatCounterNumber(totalEarned)
+
+    local padding = 15
+    local textWidth = amount.TextBounds.X
+    local newWidth = math.min(textWidth + padding + 40, maxWidth) -- 40 = space untuk icon
+
+    -- update ukuran amount
+    amount.Size = UDim2.new(0, textWidth + padding, amount.Size.Y.Scale, amount.Size.Y.Offset)
+
+    -- update ukuran frameCounter biar ikut memanjang
+    frameCounter.Size = UDim2.new(0, newWidth, frameCounter.Size.Y.Scale, frameCounter.Size.Y.Offset)
+end
 
 -- =======================================
 -- FORMAT ANGKA
 -- =======================================
+-- 1️⃣ Untuk Counter Kanan Atas (Tanpa titik)
+local function formatCounterNumber(num)
+    return tostring(num)
+end
+
 local function formatNumber(num)
 	local str = tostring(num)
 	local formatted = str:reverse():gsub("(%d%d%d)", "%1."):reverse()
@@ -74,8 +85,8 @@ local function formatNumber(num)
 end
 
 function updateCounter(value)
-	totalEarned += value
-	amount.Text = formatNumber(totalEarned)
+    totalEarned += value
+    amount.Text = formatCounterNumber(totalEarned)  -- Counter pakai tanpa titik
 end
 
 -- =======================================
