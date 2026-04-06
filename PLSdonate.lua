@@ -1,73 +1,195 @@
 -- =======================================
--- FAKE ROBUX BUY UI (FINAL FIXED)
+-- INIT (SAVE DATA FIXED)
 -- =======================================
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
-local pendingAmount = 0
-local totalEarned = 0 --
 
--- =======================================
--- 🔥 UI KANAN ATAS (COUNTER)
--- =======================================
-local counterGui = Instance.new("ScreenGui", CoreGui)
+-- HAPUS GUI LAMA
+if CoreGui:FindFirstChild("TopCounter") then
+    CoreGui.TopCounter:Destroy()
+end
+
+-- BUAT GUI BARU
+local counterGui = Instance.new("ScreenGui")
 counterGui.Name = "TopCounter"
+counterGui.Parent = CoreGui
 
+-- DATA
+local pendingAmount = 0
+local totalEarned = 0
+
+-- 🔥 LOAD DATA AMAN (ANTI RESET)
+local function loadData()
+    if readfile and isfile and isfile("counter.txt") then
+        local success, data = pcall(function()
+            return readfile("counter.txt")
+        end)
+
+        if success and data and data ~= "" then
+            local num = tonumber(data)
+            if num then
+                totalEarned = num
+            else
+                totalEarned = 0
+            end
+        else
+            totalEarned = 0
+        end
+    else
+        totalEarned = 0
+    end
+end
+
+-- 🔥 SAVE DATA AMAN
+local function saveData()
+    if writefile then
+        pcall(function()
+            writefile("counter.txt", tostring(totalEarned))
+        end)
+    end
+end
+
+-- LOAD SAAT START
+loadData()
+
+-- =========================
+-- 🔥 COUNTER KANAN ATAS (FIX ICON POSITION)
+-- =========================
 local frameCounter = Instance.new("Frame", counterGui)
 frameCounter.AnchorPoint = Vector2.new(1, 0)
 frameCounter.Position = UDim2.new(1, -20, 0, -39)
-frameCounter.Size = UDim2.new(0, 95, 0, 44)
 frameCounter.BackgroundColor3 = Color3.fromRGB(255,255,255)
 frameCounter.BorderSizePixel = 0
+frameCounter.AutomaticSize = Enum.AutomaticSize.X
+frameCounter.Size = UDim2.new(0, 0, 0, 48)
+
 Instance.new("UICorner", frameCounter).CornerRadius = UDim.new(1,0)
 
-local iconBg = Instance.new("Frame", frameCounter)
-iconBg.Size = UDim2.new(0, 30, 0, 30)
-iconBg.Position = UDim2.new(0, 7, 0.5, -15)
-iconBg.BackgroundColor3 = Color3.fromRGB(255, 0, 120)
-iconBg.BorderSizePixel = 0
-Instance.new("UICorner", iconBg).CornerRadius = UDim.new(1,0)
+local padding = Instance.new("UIPadding", frameCounter)
+padding.PaddingTop = UDim.new(0, 6)
+padding.PaddingBottom = UDim.new(0, 6)
+padding.PaddingLeft = UDim.new(0, 6)
+padding.PaddingRight = UDim.new(0, 6)
 
-local icon = Instance.new("ImageLabel", iconBg)
-icon.Size = UDim2.new(1,0,1,0)
-icon.BackgroundTransparency = 1
-icon.Image = "rbxassetid://83381326989495"
-icon.ScaleType = Enum.ScaleType.Fit
+local layout = Instance.new("UIListLayout", frameCounter)
+layout.FillDirection = Enum.FillDirection.Horizontal
+layout.VerticalAlignment = Enum.VerticalAlignment.Center
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.Padding = UDim.new(0, 6)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
 
+local padding2 = Instance.new("UIPadding", frameCounter)
+padding2.PaddingRight = UDim.new(0, 6)
+
+-- 🔥 WRAPPER ICON (INI YANG BIKIN BISA OFFSET)
+local iconWrapper = Instance.new("Frame", frameCounter)
+iconWrapper.BackgroundTransparency = 1
+iconWrapper.Size = UDim2.new(0, 34, 0, 34)
+iconWrapper.LayoutOrder = 1
+
+local iconLeft = Instance.new("ImageLabel", iconWrapper)
+iconLeft.Size = UDim2.new(1, 0, 1, 0)
+iconLeft.BackgroundTransparency = 1
+iconLeft.Image = "rbxassetid://91943377323917"
+iconLeft.ScaleType = Enum.ScaleType.Fit
+
+-- 🔥 TURUNIN ICON DI SINI
+iconLeft.Position = UDim2.new(0, 4, 0, 2)
+
+-- ANGKA
 local amount = Instance.new("TextLabel", frameCounter)
-amount.Text = "0"
-amount.Size = UDim2.new(0, 35, 1, 0)
-amount.Position = UDim2.new(0, 40, 0, 0)
+amount.AutomaticSize = Enum.AutomaticSize.X
+amount.Size = UDim2.new(0, 0, 1, 0)
 amount.BackgroundTransparency = 1
-amount.TextSize = 20
+amount.Text = tostring(totalEarned)
 amount.TextColor3 = Color3.fromRGB(255, 0, 120)
 amount.TextScaled = false
+amount.TextSize = 20
 amount.Font = Enum.Font.GothamBlack
-amount.TextXAlignment = Enum.TextXAlignment.Left
-amount.TextYAlignment = Enum.TextYAlignment.Center
+amount.LayoutOrder = 2
 
--- FORMAT ANGKA TANPA TITIK
-local function formatCounterNumber(num)
-    return tostring(num)
-end
+local iconRightWrapper = Instance.new("Frame", frameCounter)
+iconRightWrapper.BackgroundTransparency = 1
+iconRightWrapper.Size = UDim2.new(0, 30, 0, 30)
+iconRightWrapper.LayoutOrder = 3
 
-local maxWidth = 140 -- maksimal lebar counter
+local iconRight = Instance.new("ImageLabel", iconRightWrapper)
+iconRight.Size = UDim2.new(1, 0, 1, 0)
+iconRight.BackgroundTransparency = 1
+iconRight.Image = "rbxassetid://77113635080207"
+iconRight.ScaleType = Enum.ScaleType.Fit
 
-function updateCounter(value)
-    totalEarned += value
-    amount.Text = formatCounterNumber(totalEarned)
+iconRight.Position = UDim2.new(0, -4, 0, 0) -- 👈 tambah ini
 
-    local padding = 15
-    local textWidth = amount.TextBounds.X
-    local newWidth = math.min(textWidth + padding + 40, maxWidth) -- 40 = space untuk icon
+-- =========================
+-- 🔥 COUNTER KIRI BAWAH (FIX ICON POSITION)
+-- =========================
+local frameCounter2 = Instance.new("Frame", counterGui)
+frameCounter2.AnchorPoint = Vector2.new(0, 1)
+frameCounter2.Position = UDim2.new(0, 22, 1, -20)
+frameCounter2.BackgroundColor3 = Color3.fromRGB(255,255,255)
+frameCounter2.BorderSizePixel = 0
+frameCounter2.AutomaticSize = Enum.AutomaticSize.X
+frameCounter2.Size = UDim2.new(0, 0, 0, 44)
 
-    -- update ukuran amount
-    amount.Size = UDim2.new(0, textWidth + padding, amount.Size.Y.Scale, amount.Size.Y.Offset)
+Instance.new("UICorner", frameCounter2).CornerRadius = UDim.new(1,0)
 
-    -- update ukuran frameCounter biar ikut memanjang
-    frameCounter.Size = UDim2.new(0, newWidth, frameCounter.Size.Y.Scale, frameCounter.Size.Y.Offset)
-end
+local padding3 = Instance.new("UIPadding", frameCounter2)
+padding3.PaddingTop = UDim.new(0, 6)
+padding3.PaddingBottom = UDim.new(0, 6)
+padding3.PaddingLeft = UDim.new(0, 6)
+padding3.PaddingRight = UDim.new(0, 6)
+
+local layout2 = Instance.new("UIListLayout", frameCounter2)
+layout2.FillDirection = Enum.FillDirection.Horizontal
+layout2.VerticalAlignment = Enum.VerticalAlignment.Center
+layout2.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout2.Padding = UDim.new(0, 6)
+layout2.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- ICON KIRI (WRAPPER BIAR BISA OFFSET)
+local iconLeftWrapper2 = Instance.new("Frame", frameCounter2)
+iconLeftWrapper2.BackgroundTransparency = 1
+iconLeftWrapper2.Size = UDim2.new(0, 34, 0, 34)
+iconLeftWrapper2.LayoutOrder = 1
+
+local iconLeft2 = Instance.new("ImageLabel", iconLeftWrapper2)
+iconLeft2.Size = UDim2.new(1, 0, 1, 0)
+iconLeft2.BackgroundTransparency = 1
+iconLeft2.Image = "rbxassetid://91943377323917"
+iconLeft2.ScaleType = Enum.ScaleType.Fit
+
+-- 🔥 OFFSET BIAR MIRIP YANG ATAS
+iconLeft2.Position = UDim2.new(0, 4, 0, 2)
+
+-- ANGKA
+local amount2 = Instance.new("TextLabel", frameCounter2)
+amount2.AutomaticSize = Enum.AutomaticSize.X
+frameCounter2.Size = UDim2.new(0, 0, 0, 52)
+amount2.BackgroundTransparency = 1
+amount2.Text = tostring(totalEarned)
+amount2.TextColor3 = Color3.fromRGB(255, 0, 120)
+amount2.TextScaled = false
+amount2.TextSize = 20
+amount2.Font = Enum.Font.GothamBlack
+amount2.LayoutOrder = 2
+
+-- ICON KANAN (WRAPPER + OFFSET)
+local iconRightWrapper2 = Instance.new("Frame", frameCounter2)
+iconRightWrapper2.BackgroundTransparency = 1
+iconRightWrapper2.Size = UDim2.new(0, 30, 0, 30)
+iconRightWrapper2.LayoutOrder = 3
+
+local iconRight2 = Instance.new("ImageLabel", iconRightWrapper2)
+iconRight2.Size = UDim2.new(1, 0, 1, 0)
+iconRight2.BackgroundTransparency = 1
+iconRight2.Image = "rbxassetid://77113635080207"
+iconRight2.ScaleType = Enum.ScaleType.Fit
+
+-- 🔥 geser sedikit ke kiri (mirip atas)
+iconRight2.Position = UDim2.new(0, -4, 0, 0)
 
 -- =======================================
 -- FORMAT ANGKA
@@ -86,8 +208,15 @@ end
 
 function updateCounter(value)
     totalEarned += value
-    amount.Text = formatCounterNumber(totalEarned)  -- Counter pakai tanpa titik
+
+    amount.Text = tostring(totalEarned)
+    amount2.Text = tostring(totalEarned)
+
+    saveData()
 end
+
+task.wait()
+updateCounter(0)
 
 -- =======================================
 -- UPDATE ROBUX DISPLAY
@@ -459,27 +588,19 @@ local DARK_BLUE = Color3.fromRGB(30, 50, 140) -- sedikit lebih gelap buat anim
 	end)
 
 	buy.MouseButton1Click:Connect(function()
-		playerRobux -= itemPrice
-		updateRobux()
+    playerRobux -= itemPrice
+    updateRobux()
 
-		local earned = math.floor(itemPrice * 0.7)
-		pendingAmount += earned
+    local earned = math.floor(itemPrice * 0.7)
+    pendingAmount += earned
 
-		local originalPos = frame.Position
-		local turun = TweenService:Create(frame, TweenInfo.new(0.3), {
-			Position = originalPos + UDim2.new(0,0,0,100)
-		})
-		turun:Play()
-		turun.Completed:Wait()
+    -- 🔥 langsung skip animasi (biar gak keliatan robux berkurang)
+    frame.Position = frame.Position + UDim2.new(0,0,0,80)
 
-		local naik = TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Back), {
-			Position = originalPos
-		})
-		naik:Play()
-		naik.Completed:Wait()
+    task.wait(0.05) -- delay dikit biar smooth
 
-		showSuccessUI(targetName)
-	end)
+    showSuccessUI(targetName)
+end)
 end
 
 MarketplaceService.PromptGamePassPurchaseRequested:Connect(function(player, gamepassId)
@@ -489,3 +610,13 @@ end)
 MarketplaceService.PromptProductPurchaseRequested:Connect(function(player, productId)
 	showUI(productId, false)
 end)
+
+function resetCounter()
+    totalEarned = 0
+    amount.Text = "0"
+    amount2.Text = "0"
+
+    if writefile then
+        writefile("counter.txt", "0") -- 🔥 ini yang bikin permanen
+    end
+end
