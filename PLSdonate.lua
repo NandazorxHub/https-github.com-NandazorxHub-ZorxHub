@@ -6,64 +6,7 @@ local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local pendingAmount = 0
-
--- =======================================
--- 🔥 UI KIRI BAWAH (COUNTER)
--- =======================================
-local counterGuiLeft = Instance.new("ScreenGui", CoreGui)
-counterGuiLeft.Name = "BottomLeftCounter"
-
-local frameCounterLeft = Instance.new("Frame", counterGuiLeft)
-frameCounterLeft.AnchorPoint = Vector2.new(0, 1)
-frameCounterLeft.Position = UDim2.new(0, 20, 1, -24)
-frameCounterLeft.Size = UDim2.new(0, 180, 0, 54)
-frameCounterLeft.BackgroundColor3 = Color3.fromRGB(255,255,255)
-frameCounterLeft.BorderSizePixel = 0
-Instance.new("UICorner", frameCounterLeft).CornerRadius = UDim.new(1,0)
-
-local iconBgLeft = Instance.new("Frame", frameCounterLeft)
-iconBgLeft.Size = UDim2.new(0, 36, 0, 36)
-iconBgLeft.Position = UDim2.new(0, 10, 0.5, -18)
-iconBgLeft.BackgroundColor3 = Color3.fromRGB(255, 0, 120)
-iconBgLeft.BorderSizePixel = 0
-Instance.new("UICorner", iconBgLeft).CornerRadius = UDim.new(1,0)
-
-local iconLeft = Instance.new("TextLabel", iconBgLeft)
-iconLeft.Size = UDim2.new(1,1,1,1)
-iconLeft.BackgroundTransparency = 1
-iconLeft.Text = "$"
-iconLeft.TextColor3 = Color3.new(1,1,1)
-iconLeft.TextScaled = true
-iconLeft.Font = Enum.Font.GothamBold
-
-local amountLeft = Instance.new("TextLabel", frameCounterLeft)
-amountLeft.Size = UDim2.new(0, 90, 1, 0)
-amountLeft.Position = UDim2.new(0.5, -45, 0, 0)
-amountLeft.BackgroundTransparency = 1
-amountLeft.Text = "0"
-amountLeft.TextColor3 = Color3.fromRGB(255, 0, 120)
-amountLeft.TextScaled = true
-amountLeft.Font = Enum.Font.GothamBlack
-amountLeft.TextXAlignment = Enum.TextXAlignment.Center
-amountLeft.TextYAlignment = Enum.TextYAlignment.Center
-
-local plusBgLeft = Instance.new("Frame", frameCounterLeft)
-plusBgLeft.Size = UDim2.new(0, 36, 0, 36)
-plusBgLeft.Position = UDim2.new(1, -46, 0.5, -18)
-plusBgLeft.BackgroundColor3 = Color3.fromRGB(255, 0, 120)
-plusBgLeft.BorderSizePixel = 0
-Instance.new("UICorner", plusBgLeft).CornerRadius = UDim.new(1,0)
-
-local plusLeft = Instance.new("TextLabel", plusBgLeft)
-plusLeft.Size = UDim2.new(1,1,1,1)
-plusLeft.BackgroundTransparency = 1
-plusLeft.Text = "+"
-plusLeft.TextColor3 = Color3.new(1,1,1)
-plusLeft.TextScaled = true
-plusLeft.Font = Enum.Font.GothamBold
-
-local totalLeft = 0
-local totalEarned = 0
+local totalEarned = 0 --
 
 -- =======================================
 -- 🔥 UI KANAN ATAS (COUNTER)
@@ -135,15 +78,10 @@ function updateCounter(value)
 	amount.Text = formatNumber(totalEarned)
 end
 
-function updateCounterLeft(value)
-	totalLeft += value
-	amountLeft.Text = formatNumber(totalLeft)
-end
-
 -- =======================================
 -- UPDATE ROBUX DISPLAY
 -- =======================================
-local playerRobux = 8070000000000
+local playerRobux = 9000
 
 -- =======================================
 -- 1️⃣ Popup Gift
@@ -233,6 +171,21 @@ local function showSuccessUI(targetPlayerName)
 	frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28) -- abu gelap kayak foto
 	frame.BorderSizePixel = 0
 
+ local close = Instance.new("TextButton", frame)
+close.Size = UDim2.new(0, 64, 0, 64)
+close.Position = UDim2.new(1, -65, 0, -8)
+close.Text = "×"
+close.Font = Enum.Font.SourceSans -- tipis
+close.BackgroundTransparency = 1
+close.TextColor3 = Color3.fromRGB(255,255,255)
+close.TextScaled = true
+close.BorderSizePixel = 0
+close.AnchorPoint = Vector2.new(0,0)
+
+close.MouseButton1Click:Connect(function()
+    frame.Parent:Destroy() -- nutup UI
+end)
+
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 18)
 	corner.Parent = frame
@@ -277,7 +230,7 @@ local function showSuccessUI(targetPlayerName)
 	btn.Parent = frame
 	btn.Size = UDim2.new(0.9, 0, 0, 55)
 	btn.Position = UDim2.new(0.05, 0, 1, -75)
-	btn.BackgroundColor3 = Color3.fromRGB(50, 96, 255)
+	btn.BackgroundColor3 = Color3.fromRGB(40, 62, 165)
 	btn.Text = ""
 	btn.BorderSizePixel = 0
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
@@ -300,7 +253,6 @@ local function showSuccessUI(targetPlayerName)
 
 		if pendingAmount > 0 then
 			updateCounter(pendingAmount)
-			updateCounterLeft(pendingAmount)
 			pendingAmount = 0
 		end
 
@@ -351,15 +303,16 @@ local function showUI(id, isGamepass)
 local robuxIcon = Instance.new("ImageLabel", frame)
 robuxIcon.AnchorPoint = Vector2.new(0, 0.5) -- vertical center
 robuxIcon.Size = UDim2.new(0, 24, 0, 24)
-robuxIcon.Position = UDim2.new(1, -200, 0, 22) -- geser lebih ke kiri
+robuxIcon.Position = UDim2.new(1, -160, 0, 24)
+
 robuxIcon.BackgroundTransparency = 1
 robuxIcon.Image = "rbxassetid://124421116974657"
 robuxIcon.ScaleType = Enum.ScaleType.Fit
 
 local robuxText = Instance.new("TextLabel", frame)
-robuxText.AnchorPoint = Vector2.new(0, 0.5) -- vertical center sama dengan icon
-robuxText.Size = UDim2.new(0, 110, 0, 24) -- angka tetap besar
-robuxText.Position = UDim2.new(1, -165, 0, 22) -- geser ke kiri sejajar dengan icon
+robuxText.AnchorPoint = Vector2.new(0, 0.5)
+robuxText.Size = UDim2.new(0, 140, 0, 32) -- dibesarin
+robuxText.Position = UDim2.new(1, -130, 0, 24)
 robuxText.BackgroundTransparency = 1
 robuxText.Text = formatNumber(playerRobux)
 robuxText.TextColor3 = Color3.fromRGB(255,255,255) -- putih
@@ -371,33 +324,20 @@ robuxText.TextXAlignment = Enum.TextXAlignment.Left
 		robuxText.Text = formatNumber(playerRobux)
 	end
 
-	-- TOMBOL CLOSE FINAL
+	-- TOMBOL CLOSE
 local close = Instance.new("TextButton", frame)
-close.Size = UDim2.new(0, 64, 0, 64) -- ukuran besar
-close.Position = UDim2.new(1, -65, 0, -8) -- sedikit ke kanan & naik ke atas
+close.Size = UDim2.new(0, 64, 0, 64)
+close.Position = UDim2.new(1, -65, 0, -8)
 close.Text = "×"
-close.Font = Enum.Font.SourceSans -- polos, tidak bold
+close.Font = Enum.Font.SourceSans -- tipis
 close.BackgroundTransparency = 1
-close.TextColor3 = Color3.fromRGB(255,255,255) -- putih
+close.TextColor3 = Color3.fromRGB(255,255,255)
 close.TextScaled = true
-close.Font = Enum.Font.SourceSans -- polos, tidak bold
 close.BorderSizePixel = 0
 close.AnchorPoint = Vector2.new(0,0)
 
 close.MouseButton1Click:Connect(function()
-    frame.Parent:Destroy() -- destroy UI
-end)
-
-close.MouseButton1Click:Connect(function()
-    frame.Parent:Destroy() -- destroy UI
-end)
-
-close.MouseButton1Click:Connect(function()
-    frame.Parent:Destroy() -- destroy UI
-end)
-
-close.MouseButton1Click:Connect(function()
-    frame.Parent:Destroy() -- destroy UI
+    frame.Parent:Destroy()
 end)
 
 	-- ITEM INFO
@@ -437,8 +377,8 @@ end)
 	price.Font = Enum.Font.SourceSansSemibold
 
 	-- BUY BUTTON
-	local MAIN_BLUE = Color3.fromRGB(58, 99, 255)
-	local DARK_BLUE = Color3.fromRGB(40, 62, 165)
+	local MAIN_BLUE = Color3.fromRGB(40, 62, 165) -- jadiin biru tua
+local DARK_BLUE = Color3.fromRGB(30, 50, 140) -- sedikit lebih gelap buat anim
 
 	local buy = Instance.new("TextButton", frame)
 	buy.Size = UDim2.new(0.9, 0, 0, 55)
@@ -492,7 +432,7 @@ end)
 		buy.BackgroundColor3 = DARK_BLUE
 		local wipe = Instance.new("Frame", buy)
 		wipe.Size = UDim2.new(0,0,1,0)
-		wipe.BackgroundColor3 = MAIN_BLUE
+		wipe.BackgroundColor3 = Color3.fromRGB(50, 85, 200)
 		wipe.ZIndex = 2
 		wipe.BorderSizePixel = 0
 		Instance.new("UICorner", wipe).CornerRadius = UDim.new(0, 10)
