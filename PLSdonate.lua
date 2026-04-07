@@ -221,7 +221,7 @@ updateCounter(0)
 -- =======================================
 -- UPDATE ROBUX DISPLAY
 -- =======================================
-local playerRobux = 9000
+local playerRobux = 80000
 
 -- =======================================
 -- 1️⃣ Popup Gift
@@ -443,7 +443,7 @@ local function showUI(id, isGamepass)
 local robuxIcon = Instance.new("ImageLabel", frame)
 robuxIcon.AnchorPoint = Vector2.new(0, 0.5) -- vertical center
 robuxIcon.Size = UDim2.new(0, 24, 0, 24)
-robuxIcon.Position = UDim2.new(1, -160, 0, 24)
+robuxIcon.Position = UDim2.new(1, -147, 0, 24)
 
 robuxIcon.BackgroundTransparency = 1
 robuxIcon.Image = "rbxassetid://124421116974657"
@@ -452,11 +452,12 @@ robuxIcon.ScaleType = Enum.ScaleType.Fit
 local robuxText = Instance.new("TextLabel", frame)
 robuxText.AnchorPoint = Vector2.new(0, 0.5)
 robuxText.Size = UDim2.new(0, 140, 0, 32) -- dibesarin
-robuxText.Position = UDim2.new(1, -130, 0, 24)
+robuxText.Position = UDim2.new(1, -118, 0, 24)
 robuxText.BackgroundTransparency = 1
 robuxText.Text = formatNumber(playerRobux)
 robuxText.TextColor3 = Color3.fromRGB(255,255,255) -- putih
-robuxText.TextScaled = true
+robuxText.TextScaled = false
+robuxText.TextSize = 18
 robuxText.Font = Enum.Font.SourceSansSemibold
 robuxText.TextXAlignment = Enum.TextXAlignment.Left 
 
