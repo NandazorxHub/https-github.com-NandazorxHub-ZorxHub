@@ -27,18 +27,18 @@ local success, data = pcall(function()
 return readfile("counter.txt")
 end)
 
-if success and data and data ~= "" then  
-        local num = tonumber(data)  
-        if num then  
-            totalEarned = num  
-        else  
-            totalEarned = 0  
-        end  
-    else  
-        totalEarned = 0  
-    end  
-else  
-    totalEarned = 0  
+if success and data and data ~= "" then
+local num = tonumber(data)
+if num then
+totalEarned = num
+else
+totalEarned = 0
+end
+else
+totalEarned = 0
+end
+else
+totalEarned = 0
 end
 
 end
@@ -239,14 +239,14 @@ local main = Instance.new("Sound", parent)
 main.SoundId = "rbxassetid://9118823105"
 main.Volume = 1.5
 
-local coins = Instance.new("Sound", parent)  
-coins.SoundId = "rbxassetid://6026984224"  
-coins.Volume = 1.2  
-coins.PlaybackSpeed = 1.15  
+local coins = Instance.new("Sound", parent)
+coins.SoundId = "rbxassetid://6026984224"
+coins.Volume = 1.2
+coins.PlaybackSpeed = 1.15
 
-main:Play()  
-task.delay(0.08, function()  
-	coins:Play()  
+main:Play()
+task.delay(0.08, function()
+coins:Play()
 end)
 
 end
@@ -255,39 +255,39 @@ local function showPopup()
 if isPlaying then return end
 isPlaying = true
 
-if gui then gui:Destroy() end  
-gui = Instance.new("ScreenGui", CoreGui)  
+if gui then gui:Destroy() end
+gui = Instance.new("ScreenGui", CoreGui)
 
-local frame = Instance.new("Frame", gui)  
-frame.AnchorPoint = Vector2.new(0.5, 0.5)  
-frame.Position = UDim2.new(0.5, 0, 0.7, 0)  
-frame.Size = UDim2.new(0, 0, 0, 0)  
-frame.BackgroundTransparency = 1  
+local frame = Instance.new("Frame", gui)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Position = UDim2.new(0.5, 0, 0.7, 0)
+frame.Size = UDim2.new(0, 0, 0, 0)
+frame.BackgroundTransparency = 1
 
-local image = Instance.new("ImageLabel", frame)  
-image.Size = UDim2.new(1, 0, 1, 0)  
-image.BackgroundTransparency = 1  
-image.Image = "rbxassetid://87399120113037"  
-image.ScaleType = Enum.ScaleType.Fit  
-image.ResampleMode = Enum.ResamplerMode.Default  
+local image = Instance.new("ImageLabel", frame)
+image.Size = UDim2.new(1, 0, 1, 0)
+image.BackgroundTransparency = 1
+image.Image = "rbxassetid://87399120113037"
+image.ScaleType = Enum.ScaleType.Fit
+image.ResampleMode = Enum.ResamplerMode.Default
 
-playGiftSound(gui)  
+playGiftSound(gui)
 
-local tweenIn = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {  
-	Size = UDim2.new(0, 320, 0, 320)  
-})  
-tweenIn:Play()  
-tweenIn.Completed:Wait()  
+local tweenIn = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+Size = UDim2.new(0, 320, 0, 320)
+})
+tweenIn:Play()
+tweenIn.Completed:Wait()
 
-task.delay(1, function()  
-	local tweenOut = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {  
-		Size = UDim2.new(0, 0, 0, 0)  
-	})  
-	tweenOut:Play()  
-	tweenOut.Completed:Wait()  
-	gui:Destroy()  
-	gui = nil  
-	isPlaying = false  
+task.delay(1, function()
+local tweenOut = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+Size = UDim2.new(0, 0, 0, 0)
+})
+tweenOut:Play()
+tweenOut.Completed:Wait()
+gui:Destroy()
+gui = nil
+isPlaying = false
 end)
 
 end
@@ -307,15 +307,15 @@ end
 local function showSuccessUI(targetPlayerName)
 clear()
 
-local gui = Instance.new("ScreenGui")  
-gui.Name = "FakeRobloxBuy"  
-gui.Parent = CoreGui  
+local gui = Instance.new("ScreenGui")
+gui.Name = "FakeRobloxBuy"
+gui.Parent = CoreGui
 
-local frame = Instance.new("Frame")  
-frame.Parent = gui  
-frame.Size = UDim2.new(0, 620, 0, 270)  
-frame.Position = UDim2.new(0.5, -310, 0.5, -135)  
-frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28) -- abu gelap kayak foto  
+local frame = Instance.new("Frame")
+frame.Parent = gui
+frame.Size = UDim2.new(0, 620, 0, 270)
+frame.Position = UDim2.new(0.5, -310, 0.5, -135)
+frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28) -- abu gelap kayak foto
 frame.BorderSizePixel = 0
 
 local close = Instance.new("TextButton", frame)
@@ -333,80 +333,81 @@ close.MouseButton1Click:Connect(function()
 frame.Parent:Destroy() -- nutup UI
 end)
 
-local corner = Instance.new("UICorner")  
-corner.CornerRadius = UDim.new(0, 18)  
-corner.Parent = frame  
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 18)
+corner.Parent = frame
 
-local stroke = Instance.new("UIStroke")  
-stroke.Thickness = 1  
-stroke.Color = Color3.fromRGB(50, 50, 56)  
-stroke.Transparency = 0.35  
-stroke.Parent = frame  
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1
+stroke.Color = Color3.fromRGB(50, 50, 56)
+stroke.Transparency = 0.35
+stroke.Parent = frame
 
-local title = Instance.new("TextLabel")  
-title.Parent = frame  
-title.Size = UDim2.new(1, -60, 0, 30)  
-title.Position = UDim2.new(0, 18, 0, 10)  
-title.Text = "Purchase completed"  
-title.TextColor3 = Color3.new(1,1,1)  
-title.BackgroundTransparency = 1  
-title.TextScaled = true  
-title.TextXAlignment = Enum.TextXAlignment.Left  
-title.Font = Enum.Font.SourceSansSemibold  
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Size = UDim2.new(1, -60, 0, 30)
+title.Position = UDim2.new(0, 18, 0, 10)
+title.Text = "Purchase completed"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.TextScaled = true
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Font = Enum.Font.SourceSansSemibold
 
-local checkIcon = Instance.new("ImageLabel")  
-checkIcon.Parent = frame  
-checkIcon.Size = UDim2.new(0, 90, 0, 90)  
-checkIcon.Position = UDim2.new(0.5, -45, 0.33, -45)  
-checkIcon.BackgroundTransparency = 1  
-checkIcon.Image = "rbxassetid://89612208213589"  
+local checkIcon = Instance.new("ImageLabel")
+checkIcon.Parent = frame
+checkIcon.Size = UDim2.new(0, 90, 0, 90)
+checkIcon.Position = UDim2.new(0.5, -45, 0.33, -45)
+checkIcon.BackgroundTransparency = 1
+checkIcon.Image = "rbxassetid://89612208213589"
 
-local successText = Instance.new("TextLabel")  
-successText.Parent = frame  
-successText.Size = UDim2.new(0.9, 0, 0, 25)  
-successText.Position = UDim2.new(0.05, 0, 0.58, 0)  
-successText.BackgroundTransparency = 1  
-successText.Text = "You have successfully bought " .. (targetPlayerName or "Player")  
-successText.TextColor3 = Color3.new(1,1,1)  
-successText.TextScaled = true  
-successText.Font = Enum.Font.SourceSans  
-successText.TextXAlignment = Enum.TextXAlignment.Center  
-successText.TextSize = 18  
+local successText = Instance.new("TextLabel")
+successText.Parent = frame
+successText.Size = UDim2.new(0.9, 0, 0, 25)
+successText.Position = UDim2.new(0.05, 0, 0.58, 0)
+successText.BackgroundTransparency = 1
+successText.Text = "You have successfully bought " .. (targetPlayerName or "Player")
+successText.TextColor3 = Color3.new(1,1,1)
+successText.TextScaled = true
+successText.Font = Enum.Font.SourceSans
+successText.TextXAlignment = Enum.TextXAlignment.Center
+successText.TextSize = 18
 
-local btn = Instance.new("TextButton")  
-btn.Parent = frame  
-btn.Size = UDim2.new(0.9, 0, 0, 55)  
-btn.Position = UDim2.new(0.05, 0, 1, -75)  
-btn.BackgroundColor3 = Color3.fromRGB(40, 62, 165)  
-btn.Text = ""  
-btn.BorderSizePixel = 0  
-Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)  
+local btn = Instance.new("TextButton")
+btn.Parent = frame
+btn.Size = UDim2.new(0.9, 0, 0, 55)
+btn.Position = UDim2.new(0.05, 0, 1, -75)
+btn.BackgroundColor3 = Color3.fromRGB(40, 62, 165)
+btn.Text = ""
+btn.BorderSizePixel = 0
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
-local txt = Instance.new("TextLabel")  
-txt.Parent = btn  
-txt.Size = UDim2.new(1,0,1,0)  
-txt.BackgroundTransparency = 1  
-txt.Text = "Okay"  
-txt.TextColor3 = Color3.new(1,1,1)  
-txt.TextSize = 22  
-txt.Font = Enum.Font.SourceSans  
+local txt = Instance.new("TextLabel")
+txt.Parent = btn
+txt.Size = UDim2.new(1,0,1,0)
+txt.BackgroundTransparency = 1
+txt.Text = "Okay"
+txt.TextColor3 = Color3.new(1,1,1)
+txt.TextSize = 22
+txt.Font = Enum.Font.SourceSans
 
-local sound = Instance.new("Sound", btn)  
-sound.SoundId = "rbxassetid://9118823150"  
-sound.Volume = 1.5  
+local sound = Instance.new("Sound", btn)
+sound.SoundId = "rbxassetid://9118823150"
+sound.Volume = 1.5
 
-btn.MouseButton1Click:Connect(function()  
-	sound:Play()  
+btn.MouseButton1Click:Connect(function()
+sound:Play()
 
-	if pendingAmount > 0 then  
-		updateCounter(pendingAmount)  
-		pendingAmount = 0  
-	end  
+if pendingAmount > 0 then    
+	updateCounter(pendingAmount)    
+	pendingAmount = 0    
+end    
 
-	gui:Destroy()  
-	task.delay(1, function()  
-		showPopup()  
-	end)  
+gui:Destroy()    
+task.delay(1, function()    
+	showPopup()    
+end)
+
 end)
 
 end
@@ -417,35 +418,35 @@ end
 local function showUI(id, isGamepass)
 clear()
 
-local gui = Instance.new("ScreenGui", CoreGui)  
-gui.Name = "FakeRobloxBuy"  
+local gui = Instance.new("ScreenGui", CoreGui)
+gui.Name = "FakeRobloxBuy"
 
-local frame = Instance.new("Frame", gui)  
-frame.Size = UDim2.new(0, 620, 0, 270)  
-frame.Position = UDim2.new(0.5, -310, 0.5, -135)  
-frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28) -- abu kehitaman kayak foto  
-frame.BorderSizePixel = 0  
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 620, 0, 270)
+frame.Position = UDim2.new(0.5, -310, 0.5, -135)
+frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28) -- abu kehitaman kayak foto
+frame.BorderSizePixel = 0
 
-local corner = Instance.new("UICorner")  
-corner.CornerRadius = UDim.new(0, 18)  
-corner.Parent = frame  
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 18)
+corner.Parent = frame
 
-local stroke = Instance.new("UIStroke")  
-stroke.Thickness = 1  
-stroke.Color = Color3.fromRGB(50, 50, 56)  
-stroke.Transparency = 0.35  
-stroke.Parent = frame  
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1
+stroke.Color = Color3.fromRGB(50, 50, 56)
+stroke.Transparency = 0.35
+stroke.Parent = frame
 
--- TITLE  
-local title = Instance.new("TextLabel", frame)  
-title.Size = UDim2.new(1, -180, 0, 35)  
-title.Position = UDim2.new(0, 18, 0, 10)  
-title.Text = "Buy item"  
-title.TextColor3 = Color3.new(1,1,1)  
-title.BackgroundTransparency = 1  
-title.TextScaled = true  
-title.TextXAlignment = Enum.TextXAlignment.Left  
-title.Font = Enum.Font.SourceSansSemibold  
+-- TITLE
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -180, 0, 35)
+title.Position = UDim2.new(0, 18, 0, 10)
+title.Text = "Buy item"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.TextScaled = true
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Font = Enum.Font.SourceSansSemibold
 
 -- ROBUX DISPLAY FINAL KE KIRI
 
@@ -470,7 +471,7 @@ robuxText.TextSize = 18
 robuxText.Font = Enum.Font.SourceSansSemibold
 robuxText.TextXAlignment = Enum.TextXAlignment.Left
 
-updateRobux = function()  
+updateRobux = function()
 robuxText.Text = formatNumber(playerRobux)
 
 end
@@ -492,128 +493,127 @@ close.MouseButton1Click:Connect(function()
 frame.Parent:Destroy()
 end)
 
--- ITEM INFO  
-local imageLabel = Instance.new("ImageLabel", frame)  
-imageLabel.Size = UDim2.new(0, 100, 0, 100)  
-imageLabel.Position = UDim2.new(0, 20, 0, 78)  
-imageLabel.BackgroundColor3 = Color3.fromRGB(18,18,22)  
-imageLabel.BorderSizePixel = 0  
-imageLabel.ScaleType = Enum.ScaleType.Crop  
-Instance.new("UICorner", imageLabel).CornerRadius = UDim.new(0, 8)  
+-- ITEM INFO
+local imageLabel = Instance.new("ImageLabel", frame)
+imageLabel.Size = UDim2.new(0, 100, 0, 100)
+imageLabel.Position = UDim2.new(0, 20, 0, 78)
+imageLabel.BackgroundColor3 = Color3.fromRGB(18,18,22)
+imageLabel.BorderSizePixel = 0
+imageLabel.ScaleType = Enum.ScaleType.Crop
+Instance.new("UICorner", imageLabel).CornerRadius = UDim.new(0, 8)
 
-local itemName = Instance.new("TextLabel", frame)  
-itemName.Size = UDim2.new(0, 320, 0, 32)  
-itemName.Position = UDim2.new(0, 140, 0, 88)  
-itemName.Text = "Loading..."  
-itemName.TextColor3 = Color3.new(1,1,1)  
-itemName.BackgroundTransparency = 1  
-itemName.TextScaled = true  
-itemName.TextXAlignment = Enum.TextXAlignment.Left  
-itemName.Font = Enum.Font.SourceSansSemibold  
+local itemName = Instance.new("TextLabel", frame)
+itemName.Size = UDim2.new(0, 320, 0, 32)
+itemName.Position = UDim2.new(0, 140, 0, 88)
+itemName.Text = "Loading..."
+itemName.TextColor3 = Color3.new(1,1,1)
+itemName.BackgroundTransparency = 1
+itemName.TextScaled = true
+itemName.TextXAlignment = Enum.TextXAlignment.Left
+itemName.Font = Enum.Font.SourceSansSemibold
 
-local priceIcon = Instance.new("ImageLabel", frame)  
-priceIcon.Size = UDim2.new(0, 18, 0, 18)  
-priceIcon.Position = UDim2.new(0, 142, 0, 130)  
-priceIcon.BackgroundTransparency = 1  
-priceIcon.Image = "rbxassetid://124421116974657"  
-priceIcon.ScaleType = Enum.ScaleType.Fit  
+local priceIcon = Instance.new("ImageLabel", frame)
+priceIcon.Size = UDim2.new(0, 18, 0, 18)
+priceIcon.Position = UDim2.new(0, 142, 0, 130)
+priceIcon.BackgroundTransparency = 1
+priceIcon.Image = "rbxassetid://124421116974657"
+priceIcon.ScaleType = Enum.ScaleType.Fit
 
-local price = Instance.new("TextLabel", frame)  
-price.Size = UDim2.new(0, 120, 0, 22)  
-price.Position = UDim2.new(0, 164, 0, 127)  
-price.Text = "..."  
-price.TextColor3 = Color3.fromRGB(230,230,230)  
-price.BackgroundTransparency = 1  
-price.TextScaled = true  
-price.TextXAlignment = Enum.TextXAlignment.Left  
-price.Font = Enum.Font.SourceSansSemibold  
+local price = Instance.new("TextLabel", frame)
+price.Size = UDim2.new(0, 120, 0, 22)
+price.Position = UDim2.new(0, 164, 0, 127)
+price.Text = "..."
+price.TextColor3 = Color3.fromRGB(230,230,230)
+price.BackgroundTransparency = 1
+price.TextScaled = true
+price.TextXAlignment = Enum.TextXAlignment.Left
+price.Font = Enum.Font.SourceSansSemibold
 
--- BUY BUTTON  
+-- BUY BUTTON
 local MAIN_BLUE = Color3.fromRGB(40, 62, 165) -- jadiin biru tua
 
 local DARK_BLUE = Color3.fromRGB(30, 50, 140) -- sedikit lebih gelap buat anim
 
-local buy = Instance.new("TextButton", frame)  
-buy.Size = UDim2.new(0.9, 0, 0, 55)  
-buy.Position = UDim2.new(0.05, 0, 1, -75)  
-buy.BackgroundColor3 = MAIN_BLUE  
-buy.Text = ""  
-buy.ZIndex = 1  
-buy.BorderSizePixel = 0  
-Instance.new("UICorner", buy).CornerRadius = UDim.new(0, 10)  
+local buy = Instance.new("TextButton", frame)
+buy.Size = UDim2.new(0.9, 0, 0, 55)
+buy.Position = UDim2.new(0.05, 0, 1, -75)
+buy.BackgroundColor3 = MAIN_BLUE
+buy.Text = ""
+buy.ZIndex = 1
+buy.BorderSizePixel = 0
+Instance.new("UICorner", buy).CornerRadius = UDim.new(0, 10)
 
-local buyText = Instance.new("TextLabel", frame)  
-buyText.Size = buy.Size  
-buyText.Position = buy.Position  
-buyText.BackgroundTransparency = 1  
-buyText.Text = "Buy"  
-buyText.TextColor3 = Color3.new(1,1,1)  
-buyText.TextSize = 24  
-buyText.Font = Enum.Font.SourceSans  
-buyText.ZIndex = 5  
+local buyText = Instance.new("TextLabel", frame)
+buyText.Size = buy.Size
+buyText.Position = buy.Position
+buyText.BackgroundTransparency = 1
+buyText.Text = "Buy"
+buyText.TextColor3 = Color3.new(1,1,1)
+buyText.TextSize = 24
+buyText.Font = Enum.Font.SourceSans
+buyText.ZIndex = 5
 
-buy:GetPropertyChangedSignal("Position"):Connect(function()  
-	buyText.Position = buy.Position  
-end)  
+buy:GetPropertyChangedSignal("Position"):Connect(function()
+buyText.Position = buy.Position
+end)
 
-local itemPrice = 0  
-local targetName = "Player"  
+local itemPrice = 0
+local targetName = "Player"
 
-task.spawn(function()  
-	local success, info = pcall(function()  
-		return MarketplaceService:GetProductInfo(  
-			id,  
-			isGamepass and Enum.InfoType.GamePass or Enum.InfoType.Product  
-		)  
-	end)  
+task.spawn(function()
+local success, info = pcall(function()
+return MarketplaceService:GetProductInfo(
+id,
+isGamepass and Enum.InfoType.GamePass or Enum.InfoType.Product
+)
+end)
 
-	if success and info then  
-		itemName.Text = info.Name or "Item"  
-		itemPrice = info.PriceInRobux or info.Price or 0  
-		price.Text = tostring(itemPrice)  
-		imageLabel.Image = info.IconImageAssetId and ("rbxassetid://" .. info.IconImageAssetId) or ""  
-		if info.Creator and info.Creator.Name then  
-			targetName = info.Creator.Name  
-		end  
-	else  
-		itemName.Text = "Item"  
-		price.Text = "0"  
-	end  
-end)  
+if success and info then    
+	itemName.Text = info.Name or "Item"    
+	itemPrice = info.PriceInRobux or info.Price or 0    
+	price.Text = tostring(itemPrice)    
+	imageLabel.Image = info.IconImageAssetId and ("rbxassetid://" .. info.IconImageAssetId) or ""    
+	if info.Creator and info.Creator.Name then    
+		targetName = info.Creator.Name    
+	end    
+else    
+	itemName.Text = "Item"    
+	price.Text = "0"    
+end
 
-task.spawn(function()  
-	buy.BackgroundColor3 = DARK_BLUE  
-	local wipe = Instance.new("Frame", buy)  
-	wipe.Size = UDim2.new(0,0,1,0)  
-	wipe.BackgroundColor3 = Color3.fromRGB(50, 85, 200)  
-	wipe.ZIndex = 2  
-	wipe.BorderSizePixel = 0  
-	Instance.new("UICorner", wipe).CornerRadius = UDim.new(0, 10)  
+end)
 
-	local tween = TweenService:Create(wipe, TweenInfo.new(6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {  
-		Size = UDim2.new(1,0,1,0)  
-	})  
-	tween:Play()  
-	tween.Completed:Wait()  
-	wipe:Destroy()  
-	buy.BackgroundColor3 = MAIN_BLUE  
-	buyText.Text = "Buy"  
-end)  
+task.spawn(function()
+buy.BackgroundColor3 = DARK_BLUE
+local wipe = Instance.new("Frame", buy)
+wipe.Size = UDim2.new(0,0,1,0)
+wipe.BackgroundColor3 = Color3.fromRGB(50, 85, 200)
+wipe.ZIndex = 2
+wipe.BorderSizePixel = 0
+Instance.new("UICorner", wipe).CornerRadius = UDim.new(0, 10)
 
-buy.MouseButton1Click:Connect(function()  
-playerRobux -= itemPrice  
-updateRobux()  
+local tween = TweenService:Create(wipe, TweenInfo.new(6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {    
+	Size = UDim2.new(1,0,1,0)    
+})    
+tween:Play()    
+tween.Completed:Wait()    
+wipe:Destroy()    
+buy.BackgroundColor3 = MAIN_BLUE    
+buyText.Text = "Buy"
 
-local earned = math.floor(itemPrice * 0.7)  
+end)
 
--- 🔥 INI YANG LU TAMBAH DI SINI  
-updateCounter(earned)  
+buy.MouseButton1Click:Connect(function()
+    playerRobux -= itemPrice
+    updateRobux()
 
-frame.Position = frame.Position + UDim2.new(0,0,0,80)  
-task.wait(0.05)  
+    -- SIMPAN DULU, JANGAN NAIKIN COUNTER
+    pendingAmount = math.floor(itemPrice * 0.7)
 
-showSuccessUI(targetName)
+    frame.Position = frame.Position + UDim2.new(0,0,0,80)
+    task.wait(0.05)
 
+    showSuccessUI(targetName)
 end)
 end
 
@@ -630,8 +630,8 @@ totalEarned = 0
 amount.Text = "0"
 amount2.Text = "0"
 
-if writefile then  
-    writefile("counter.txt", "0") -- 🔥 ini yang bikin permanen  
+if writefile then
+writefile("counter.txt", "0") -- 🔥 ini yang bikin permanen
 end
 
 end
@@ -687,11 +687,11 @@ dragging = true
 dragStart = input.Position
 startPos = frame.Position
 
-input.Changed:Connect(function()  
-        if input.UserInputState == Enum.UserInputState.End then  
-            dragging = false  
-        end  
-    end)  
+input.Changed:Connect(function()
+if input.UserInputState == Enum.UserInputState.End then
+dragging = false
+end
+end)
 end
 
 end)
@@ -747,9 +747,9 @@ Instance.new("UICorner", enterBtn).CornerRadius = UDim.new(0, 6)
 deleteBtn.MouseButton1Click:Connect(function()
 textbox.Text = ""
 
-playerRobux = 0  
-if updateRobux then  
-    updateRobux()  
+playerRobux = 0
+if updateRobux then
+updateRobux()
 end
 
 end)
@@ -758,21 +758,22 @@ end)
 enterBtn.MouseButton1Click:Connect(function()
 local num = tonumber(textbox.Text)
 
-if num then  
-    playerRobux = num  
+if num then
+playerRobux = num
 
-    -- update tampilan robux  
-    for _, v in pairs(game.CoreGui:GetDescendants()) do  
-        if v:IsA("TextLabel") and v.Text:find("%d") then  
-            if v.Parent and v.Parent.Name ~= "" then  
-                -- optional filter kalau mau  
-            end  
-        end  
-    end  
+-- update tampilan robux    
+for _, v in pairs(game.CoreGui:GetDescendants()) do    
+    if v:IsA("TextLabel") and v.Text:find("%d") then    
+        if v.Parent and v.Parent.Name ~= "" then    
+            -- optional filter kalau mau    
+        end    
+    end    
+end    
 
-    print("Robux di set ke:", num)  
-else  
-    warn("Harus angka!")  
+print("Robux di set ke:", num)
+
+else
+warn("Harus angka!")
 end
 
 end)
@@ -783,9 +784,9 @@ local visible = true
 game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
 if gpe then return end
 
-if input.KeyCode == Enum.KeyCode.K then  
-    visible = not visible  
-    frame.Visible = visible  
+if input.KeyCode == Enum.KeyCode.K then
+visible = not visible
+frame.Visible = visible
 end
 
 end)
@@ -826,11 +827,11 @@ draggingBtn = true
 dragStartBtn = input.Position
 startPosBtn = toggleBtn.Position
 
-input.Changed:Connect(function()  
-        if input.UserInputState == Enum.UserInputState.End then  
-            draggingBtn = false  
-        end  
-    end)  
+input.Changed:Connect(function()
+if input.UserInputState == Enum.UserInputState.End then
+draggingBtn = false
+end
+end)
 end
 
 end)
@@ -860,6 +861,19 @@ lineBottom.BackgroundColor3 = Color3.fromRGB(50, 120, 200) -- 🔵 biru
 lineBottom.BorderSizePixel = 0
 lineBottom.Parent = frame
 
+-- TEXTBOX NAMA (TAMBAHAN DOANG)
+local nameBox = Instance.new("TextBox")
+nameBox.Size = UDim2.new(0.9, 0, 0, 35)
+nameBox.Position = UDim2.new(0.05, 0, 0, 200)
+nameBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+nameBox.TextColor3 = Color3.fromRGB(255,255,255)
+nameBox.PlaceholderText = "Ganti Nama Visual"
+nameBox.Text = ""
+nameBox.ClearTextOnFocus = false
+nameBox.Parent = frame
+
+Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 6)
+
 -- =========================
 -- 🔥 TOMBOL AVA (DI BAWAH GARIS)
 -- =========================
@@ -876,21 +890,88 @@ Instance.new("UICorner", avaBtn).CornerRadius = UDim.new(0, 6)
 
 -- 🔥 FUNCTION CLICK AVA
 avaBtn.MouseButton1Click:Connect(function()
-    print("Ava di klik")
+	print("Ava di klik")
 
-    -- efek klik biar keliatan
-    avaBtn.BackgroundColor3 = Color3.fromRGB(30, 90, 180)
-    task.wait(0.1)
-    avaBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+	-- efek klik
+	avaBtn.BackgroundColor3 = Color3.fromRGB(30, 90, 180)
+	task.wait(0.1)
+	avaBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
 
-    -- JALANKAN SCRIPT
-    local success, err = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/darkdexv2/universalavatarchanger/main/avatarchanger"))()
-    end)
+	-- SCRIPT BARU
+	local success, err = pcall(function()
+		loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Clone-Avatar-Morph-61173"))()
+	end)
 
-    if not success then
-        warn("Gagal:", err)
-    end
+	if not success then
+		warn("Gagal:", err)
+	end
+end)
+
+-- ===================================
+-- 🔥 BUTTON ICON (PISAH TOTAL)
+-- ===================================
+
+local iconBtn = Instance.new("TextButton")
+iconBtn.Size = enterBtn.Size
+iconBtn.Position = UDim2.new(0.53, 0, 0, 245)
+iconBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+iconBtn.Text = "Icon Head"
+iconBtn.TextColor3 = Color3.fromRGB(255,255,255)
+iconBtn.Parent = frame
+
+Instance.new("UICorner", iconBtn).CornerRadius = UDim.new(0, 6)
+
+local showIcon = false
+
+local function createHeadIcon(character)
+	local head = character:WaitForChild("Head")
+
+	if head:FindFirstChild("PG_ICON") then
+		head.PG_ICON:Destroy()
+	end
+
+	if not showIcon then return end
+
+	local bill = Instance.new("BillboardGui")
+	bill.Name = "PG_ICON"
+	bill.Adornee = head
+	bill.Parent = head
+
+	-- 🔥 LEBIH BESAR
+	bill.Size = UDim2.new(0, 120, 0, 120)
+
+	-- 🔥 LEBIH NAIK KE ATAS
+	bill.StudsOffsetWorldSpace = Vector3.new(0, 3.8, 0)
+
+	-- 🔥 FIX STABIL (anti goyang)
+	bill.AlwaysOnTop = true
+	bill.MaxDistance = math.huge
+	bill.LightInfluence = 0
+	bill.Active = false
+	bill.ClipsDescendants = false
+
+	-- 🔥 PENTING: bikin stabil banget
+	bill.ResetOnSpawn = false
+
+	local img = Instance.new("ImageLabel")
+	img.Size = UDim2.new(1, 0, 1, 0)
+	img.BackgroundTransparency = 1
+	img.Image = "rbxassetid://138326242471860"
+	img.ScaleType = Enum.ScaleType.Fit
+	img.Parent = bill
+end
+
+iconBtn.MouseButton1Click:Connect(function()
+showIcon = not showIcon
+
+if game.Players.LocalPlayer.Character then  
+    createHeadIcon(game.Players.LocalPlayer.Character)  
+end
+
+end)
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+createHeadIcon(char)
 end)
 
 -- =========================
@@ -909,14 +990,89 @@ Instance.new("UICorner", resetBtn).CornerRadius = UDim.new(0, 6)
 
 -- 🔥 FUNCTION RESET
 resetBtn.MouseButton1Click:Connect(function()
-    print("Reset Counter di klik")
+print("Reset Counter di klik")
 
-    -- efek klik
-    resetBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
-    task.wait(0.1)
-    resetBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+-- efek klik  
+resetBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)  
+task.wait(0.1)  
+resetBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)  
 
-    -- RESET DATA
-    resetCounter()
+-- RESET DATA  
+resetCounter()
+
+end)
+
+-- =========================
+-- 🔥 SYSTEM NAMA VISUAL (FINAL FIX ALL)
+-- =========================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local customName = "" -- 🔥 default kosong (ga tampil)
+
+local function createNameTag(character)
+local head = character:WaitForChild("Head")
+
+-- hapus lama  
+if head:FindFirstChild("CustomNameTag") then  
+    head.CustomNameTag:Destroy()  
+end  
+
+-- 🔥 kalau kosong = ga usah bikin  
+if customName == "" then return end  
+
+local bill = Instance.new("BillboardGui")  
+bill.Name = "CustomNameTag"  
+bill.Adornee = head  
+
+bill.Size = UDim2.new(0, 200, 0, 40)  
+
+-- 🔥 FIX TOTAL ANTI ZOOM  
+bill.StudsOffsetWorldSpace = Vector3.new(0, 2.8, 0)  
+bill.MaxDistance = math.huge  
+bill.AlwaysOnTop = true  
+bill.LightInfluence = 0  
+
+bill.Parent = head  
+
+local name = Instance.new("TextLabel")  
+name.Size = UDim2.new(1, 0, 1, 0)  
+name.BackgroundTransparency = 1  
+name.Text = customName  
+
+-- 🔥 CENTER  
+name.TextXAlignment = Enum.TextXAlignment.Center  
+name.TextYAlignment = Enum.TextYAlignment.Center  
+
+name.TextColor3 = Color3.fromRGB(255,255,255)  
+
+-- 🔥 BALIK KE FONT LAMA (BIASA)  
+name.Font = Enum.Font.Gotham  
+name.TextSize = 16  
+name.TextScaled = false -- 🔥 WAJIB biar ga zoom  
+
+name.TextStrokeTransparency = 0.7  
+
+name.Parent = bill
+
+end
+
+-- APPLY AWAL
+if player.Character then
+createNameTag(player.Character)
+end
+
+player.CharacterAdded:Connect(function(char)
+createNameTag(char)
+end)
+
+-- 🔥 AUTO UPDATE SAAT NGETIK
+nameBox:GetPropertyChangedSignal("Text"):Connect(function()
+customName = nameBox.Text
+
+if player.Character then  
+    createNameTag(player.Character)  
+end
 
 end)
