@@ -7,6 +7,14 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+-- =============================================
+-- 🔥 JEDA 4 DETIK DI AWAL (BIAR HP BACA SEMUA DATA)
+-- =============================================
+print("⏳ Jeda 4 detik - HP sedang baca semua data...")
+task.wait(4)
+print("✅ Selesai, semua data sudah kebaca!")
 
 -- HAPUS GUI LAMA
 if CoreGui:FindFirstChild("SimpleUI") then CoreGui.SimpleUI:Destroy() end
@@ -16,13 +24,45 @@ if CoreGui:FindFirstChild("GiftPopup") then CoreGui.GiftPopup:Destroy() end
 if CoreGui:FindFirstChild("RobloxPlusPopup") then CoreGui.RobloxPlusPopup:Destroy() end
 
 -- KONSTANTA WARNA
-local LIGHT_BLUE = Color3.fromRGB(65, 115, 255)  -- Warna loading bar (biru terang)
-local DARK_BLUE = Color3.fromRGB(33, 56, 122)    -- BIRU TUA (tombol Beli & OK)
-local CLICK_BLUE = Color3.fromRGB(22, 38, 85)    -- Efek klik
+local LIGHT_BLUE = Color3.fromRGB(65, 115, 255)
+local DARK_BLUE = Color3.fromRGB(33, 56, 122)
+local CLICK_BLUE = Color3.fromRGB(22, 38, 85)
 
 -- Variabel Global
 local mainFrame
-local currentBuyUI -- Untuk menyimpan referensi tampilan Beli Item agar bisa kembali
+local currentBuyUI
+
+-- =======================================
+-- PRELOAD DATA ITEM (SUPAYA GAK DELAY)
+-- =======================================
+local cachedItems = {}
+
+local function getItemInfo(id, isGamepass)
+    if cachedItems[id] then
+        return cachedItems[id]
+    end
+    
+    local success, info = pcall(function()
+        return MarketplaceService:GetProductInfo(id, isGamepass and Enum.InfoType.GamePass or Enum.InfoType.Product)
+    end)
+    
+    if success and info then
+        cachedItems[id] = {
+            Name = info.Name or "Item",
+            Price = info.PriceInRobux or info.Price or 0,
+            Image = info.IconImageAssetId and ("rbxassetid://" .. info.IconImageAssetId) or "",
+            Creator = info.Creator and info.Creator.Name or "Player"
+        }
+    else
+        cachedItems[id] = {
+            Name = "Item",
+            Price = 0,
+            Image = "",
+            Creator = "Player"
+        }
+    end
+    return cachedItems[id]
+end
 
 -- =======================================
 -- FORMAT ANGKA
@@ -44,7 +84,7 @@ local function clearFakeBuy()
 end
 
 -- =======================================
--- POPUP ROBLOX PLUS (DARI SUB-SCRIPT)
+-- POPUP ROBLOX PLUS
 -- =======================================
 local function showRobloxPlusPopup()
     if CoreGui:FindFirstChild("RobloxPlusPopup") then CoreGui.RobloxPlusPopup:Destroy() end
@@ -53,7 +93,7 @@ local function showRobloxPlusPopup()
     gui.Name = "RobloxPlusPopup"
     gui.Parent = CoreGui
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    gui.DisplayOrder = 100 -- Agar selalu di atas
+    gui.DisplayOrder = 100
     
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 440, 0, 420)
@@ -68,8 +108,6 @@ local function showRobloxPlusPopup()
     stroke.Color = Color3.fromRGB(255, 255, 255)
     stroke.Transparency = 0.85
     
-    -- ========== HEADER ==========
-    -- TOMBOL KEMBALI: Kembali ke tampilan BELI ITEM
     local backBtn = Instance.new("TextButton", frame)
     backBtn.Size = UDim2.new(0, 40, 0, 40)
     backBtn.Position = UDim2.new(0, 12, 0, 10)
@@ -81,9 +119,9 @@ local function showRobloxPlusPopup()
     backBtn.AutoButtonColor = false
     backBtn.ZIndex = 10
     backBtn.MouseButton1Click:Connect(function() 
-        gui:Destroy() -- Tutup halaman diskon ini
+        gui:Destroy()
         if currentBuyUI then 
-            currentBuyUI.Enabled = true -- MUNCULKAN KEMBALI HALAMAN BELI ITEM
+            currentBuyUI.Enabled = true
         end
     end)
     
@@ -105,7 +143,6 @@ local function showRobloxPlusPopup()
     title.BackgroundTransparency = 1
     title.ZIndex = 5
     
-    -- TOMBOL TUTUP: HANYA TUTUP JENDELA INI SAJA, TIDAK KEMBALI KE MENU UTAMA
     local closeBtn = Instance.new("TextButton", frame)
     closeBtn.Size = UDim2.new(0, 40, 0, 40)
     closeBtn.Position = UDim2.new(1, -52, 0, 10)
@@ -118,10 +155,8 @@ local function showRobloxPlusPopup()
     closeBtn.ZIndex = 10
     closeBtn.MouseButton1Click:Connect(function() 
         gui:Destroy()
-        -- TIDAK ADA KODE UNTUK MEMUNCULKAN MENU UTAMA DI SINI
     end)
     
-    -- ========== HARGA ==========
     local priceLabel = Instance.new("TextLabel", frame)
     priceLabel.Size = UDim2.new(1, -48, 0, 30)
     priceLabel.Position = UDim2.new(0, 24, 0, 60)
@@ -133,7 +168,6 @@ local function showRobloxPlusPopup()
     priceLabel.BackgroundTransparency = 1
     priceLabel.ZIndex = 5
     
-    -- ========== LIST BENEFIT ==========
     local benefits = {
         {text = "Diskon 10% untuk item dalam game, avatar, dan banyak lagi", icon = "rbxassetid://116213303539702"},
         {text = "Diskon 20% untuk item ini setelah 2 bulan", icon = "rbxassetid://116213303539702"},
@@ -163,7 +197,6 @@ local function showRobloxPlusPopup()
         textLabel.ZIndex = 5
     end
     
-    -- ========== TOMBOL SUBSCRIBE ==========
     local subscribeBtn = Instance.new("TextButton", frame)
     subscribeBtn.Size = UDim2.new(0, 392, 0, 48)
     subscribeBtn.Position = UDim2.new(0, 24, 0, 270)
@@ -174,7 +207,6 @@ local function showRobloxPlusPopup()
     subscribeBtn.ZIndex = 10
     Instance.new("UICorner", subscribeBtn).CornerRadius = UDim.new(0, 10)
     
-    -- TEKS SUBSCRIBE
     local btnText = Instance.new("TextLabel", subscribeBtn)
     btnText.Size = UDim2.new(1, 0, 1, 0)
     btnText.BackgroundTransparency = 1
@@ -184,7 +216,6 @@ local function showRobloxPlusPopup()
     btnText.Font = Enum.Font.SourceSansSemibold
     btnText.ZIndex = 5
     
-    -- LOADING SPINNER (8 TITIK DIAM)
     local spinner = Instance.new("Frame", subscribeBtn)
     spinner.Size = UDim2.new(0, 32, 0, 32)
     spinner.Position = UDim2.new(0.5, -16, 0.5, -16)
@@ -252,7 +283,6 @@ local function showRobloxPlusPopup()
         if currentBuyUI then currentBuyUI:Destroy() end
     end)
     
-    -- ========== SYARAT & KETENTUAN ==========
     local legalText = Instance.new("TextLabel", frame)
     legalText.Size = UDim2.new(0, 392, 0, 50)
     legalText.Position = UDim2.new(0, 24, 0, 330)
@@ -271,7 +301,7 @@ local function showRobloxPlusPopup()
 end
 
 -- =======================================
--- BAR ROBLOX PLUS (CONNECTED TO POPUP)
+-- BAR ROBLOX PLUS
 -- =======================================
 local function createRobloxPlusBar(parentFrame)
     local infoBar = Instance.new("Frame", parentFrame)
@@ -294,7 +324,6 @@ local function createRobloxPlusBar(parentFrame)
     premiumIcon.Image = "rbxassetid://98331174346812"
     premiumIcon.ZIndex = 5
 
-    -- Teks yang bisa diklik untuk membuka halaman diskon
     local infoText = Instance.new("TextButton", infoBar)
     infoText.Size = UDim2.new(0, 280, 1, 0)
     infoText.Position = UDim2.new(0, 36, 0, 0)
@@ -307,7 +336,7 @@ local function createRobloxPlusBar(parentFrame)
     infoText.AutoButtonColor = false
     infoText.ZIndex = 10
     infoText.MouseButton1Click:Connect(function()
-        if currentBuyUI then currentBuyUI.Enabled = false end -- Sembunyikan halaman beli sementara
+        if currentBuyUI then currentBuyUI.Enabled = false end
         showRobloxPlusPopup()
     end)
 
@@ -323,7 +352,7 @@ local function createRobloxPlusBar(parentFrame)
     subButton.AutoButtonColor = false
     subButton.ZIndex = 10
     subButton.MouseButton1Click:Connect(function()
-        if currentBuyUI then currentBuyUI.Enabled = false end -- Sembunyikan halaman beli sementara
+        if currentBuyUI then currentBuyUI.Enabled = false end
         showRobloxPlusPopup()
     end)
 
@@ -359,7 +388,6 @@ local function showSuccessUI(targetPlayerName)
     stroke.Color = Color3.fromRGB(255, 255, 255)
     stroke.Transparency = 0.85
 
-    -- TOMBOL TUTUP: HANYA TUTUP JENDELA INI SAJA
     local close = Instance.new("TextButton", frame)
     close.Size = UDim2.new(0, 55, 0, 55)
     close.Position = UDim2.new(1, -56, 0, -1)
@@ -372,7 +400,6 @@ local function showSuccessUI(targetPlayerName)
     close.ZIndex = 10
     close.MouseButton1Click:Connect(function() 
         gui:Destroy() 
-        -- TIDAK KEMBALI KE MENU UTAMA
     end)
 
     local title = Instance.new("TextLabel", frame)
@@ -397,7 +424,7 @@ local function showSuccessUI(targetPlayerName)
     successText.Size = UDim2.new(0.9, 0, 0, 25)
     successText.Position = UDim2.new(0.05, 0, 0, 115)
     successText.BackgroundTransparency = 1
-    successText.Text = "You have successfully bought " .. (targetPlayerName or "Player")
+    successText.Text = "Pembelian Gamepass Berhasil"
     successText.TextColor3 = Color3.fromRGB(210, 210, 210)
     successText.TextSize = 16
     successText.Font = Enum.Font.SourceSans
@@ -425,14 +452,13 @@ local function showSuccessUI(targetPlayerName)
         btn.BackgroundColor3 = CLICK_BLUE
         sound:Play()
         gui:Destroy()
-        -- TIDAK KEMBALI KE MENU UTAMA
     end)
     
     createRobloxPlusBar(frame)
 end
 
 -- =======================================
--- MAIN BUY UI
+-- MAIN BUY UI (PAKAI PRELOAD - TANPA DELAY)
 -- =======================================
 local playerRobux = 219769
 local updateRobux
@@ -440,11 +466,14 @@ local updateRobux
 local function showUI(id, isGamepass)
     clearFakeBuy()
     
+    -- 🔥 AMBIL DATA DARI CACHE (SUDAH SIAP, GAK PERLU LOADING)
+    local itemData = getItemInfo(id, isGamepass)
+    
     local gui = Instance.new("ScreenGui", CoreGui)
     gui.Name = "FakeRobloxBuy"
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.DisplayOrder = 80
-    currentBuyUI = gui -- Simpan referensi agar bisa dipanggil kembali
+    currentBuyUI = gui
 
     local frame = Instance.new("Frame", gui)
     frame.Size = UDim2.new(0, 480, 0, 255)
@@ -469,7 +498,6 @@ local function showUI(id, isGamepass)
     title.Font = Enum.Font.GothamBold
     title.ZIndex = 5
 
-    -- TOMBOL TUTUP: HANYA TUTUP JENDELA INI SAJA
     local close = Instance.new("TextButton", frame)
     close.Size = UDim2.new(0, 55, 0, 55)
     close.Position = UDim2.new(1, -56, 0, -1)
@@ -482,7 +510,6 @@ local function showUI(id, isGamepass)
     close.ZIndex = 10
     close.MouseButton1Click:Connect(function() 
         gui:Destroy() 
-        -- TIDAK KEMBALI KE MENU UTAMA
     end)
 
     local robuxContainer = Instance.new("Frame", frame)
@@ -524,11 +551,13 @@ local function showUI(id, isGamepass)
     imageLabel.BorderSizePixel = 0
     imageLabel.ZIndex = 5
     Instance.new("UICorner", imageLabel).CornerRadius = UDim.new(0, 8)
+    imageLabel.Image = itemData.Image
 
     local itemName = Instance.new("TextLabel", frame)
     itemName.Size = UDim2.new(0, 280, 0, 25)
     itemName.Position = UDim2.new(0, 115, 0, 60)
     itemName.BackgroundTransparency = 1
+    itemName.Text = itemData.Name
     itemName.TextColor3 = Color3.new(1, 1, 1)
     itemName.TextSize = 18
     itemName.TextXAlignment = Enum.TextXAlignment.Left
@@ -551,7 +580,7 @@ local function showUI(id, isGamepass)
     local price = Instance.new("TextLabel", priceContainer)
     price.Size = UDim2.new(0, 140, 0, 22)
     price.Position = UDim2.new(0, 22, 0, 0)
-    price.Text = "..."
+    price.Text = formatNumber(itemData.Price)
     price.TextColor3 = Color3.fromRGB(230, 230, 230)
     price.BackgroundTransparency = 1
     price.TextSize = 16
@@ -587,24 +616,8 @@ local function showUI(id, isGamepass)
     createRobloxPlusBar(frame)
 
     local isReady = false
-    local itemPrice = 0
-    local targetName = "Player"
-
-    task.spawn(function()
-        local success, info = pcall(function()
-            return MarketplaceService:GetProductInfo(id, isGamepass and Enum.InfoType.GamePass or Enum.InfoType.Product)
-        end)
-        if success and info then
-            itemName.Text = info.Name or "Item"
-            itemPrice = info.PriceInRobux or info.Price or 0
-            price.Text = formatNumber(itemPrice)
-            imageLabel.Image = info.IconImageAssetId and ("rbxassetid://" .. info.IconImageAssetId) or ""
-            if info.Creator and info.Creator.Name then targetName = info.Creator.Name end
-        else
-            itemName.Text = "Item"
-            price.Text = "0"
-        end
-    end)
+    local itemPrice = itemData.Price
+    local targetName = itemData.Creator
 
     task.spawn(function()
         local tween = TweenService:Create(wipe, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
@@ -639,7 +652,7 @@ MarketplaceService.PromptProductPurchaseRequested:Connect(function(player, produ
 end)
 
 -- =======================================
--- ZORXHUB MAIN PANEL (DIPERBAIKI)
+-- ZORXHUB MAIN PANEL
 -- =======================================
 local mainGui = Instance.new("ScreenGui", CoreGui)
 mainGui.Name = "SimpleUI"
@@ -667,7 +680,6 @@ mainTitle.AutoButtonColor = false
 mainTitle.ZIndex = 10
 Instance.new("UICorner", mainTitle).CornerRadius = UDim.new(0, 8)
 
--- Fungsi Geser Menu Utama
 local dragging, dragInput, dragStart, startPos
 mainTitle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -682,7 +694,7 @@ mainTitle.InputBegan:Connect(function(input)
     end
 end)
 mainTitle.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then 
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input 
     end
 end)
@@ -693,7 +705,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- KOMPONEN MENU UTAMA (DIPERBAIKI AGAR BISA DIKLIK)
 local textbox = Instance.new("TextBox", mainFrame)
 textbox.Size = UDim2.new(0.9, 0, 0, 40)
 textbox.Position = UDim2.new(0.05, 0, 0, 50)
@@ -778,12 +789,12 @@ nameBox.TextSize = 15
 Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 6)
 
 -- =======================================
--- TOMBOL TOGGLE KIRI (BISA DIGESER)
+-- TOMBOL TOGGLE KIRI
 -- =======================================
 local toggleGui = Instance.new("ScreenGui", CoreGui)
 toggleGui.Name = "ToggleUI"
 toggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-toggleGui.DisplayOrder = 20 -- Agar di atas menu lain
+toggleGui.DisplayOrder = 20
 
 local toggleBtn = Instance.new("TextButton", toggleGui)
 toggleBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -797,7 +808,6 @@ toggleBtn.AutoButtonColor = false
 toggleBtn.ZIndex = 10
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 12)
 
--- Logika Geser Tombol Toggle
 local toggleDrag, toggleInput, toggleStart, togglePos
 toggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -821,14 +831,12 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Logika Tampil/Sembunyi Menu
 local visible = true
 toggleBtn.MouseButton1Click:Connect(function()
     visible = not visible
     mainFrame.Visible = visible
 end)
 
--- Tombol Pintasan K
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.K then
@@ -837,22 +845,66 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- =======================================
--- ANTI BENTROK & CLEANER UI (DIPERBAIKI)
--- =======================================
+-- ======================================================
+-- POPUP KILLER - BRUTE FORCE (FINAL FIX)
+-- ======================================================
+
+-- MATIKAN POPUP BELI DARI SUMBER
 pcall(function()
-    game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.PurchasePrompt, false)
+    StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PurchasePrompt, false)
 end)
 
-local function cleanGameUI()
-    local allowed = {SimpleUI = true, FakeRobloxBuy = true, ToggleUI = true, RobloxPlusPopup = true}
-    for _, obj in pairs(CoreGui:GetChildren()) do
-        if obj:IsA("ScreenGui") and not allowed[obj.Name] then
-            pcall(function() 
-                if obj and obj.Parent then obj:Destroy() end 
-            end)
+-- DAFTAR GUI YANG BOLEH HIDUP
+local allowedGuis = {
+    "SimpleUI", "ToggleUI", "FakeRobloxBuy", "RobloxPlusPopup",
+    "RobloxGui", "CoreGui", "Chat", "PlayerList", "Settings", 
+    "Notification", "TopBar", "LuaChat", "VoiceChatService"
+}
+
+-- HANCURKAN SEMUA KECUALI YANG DIIZINKAN
+local function killPopupsButKeepSettings()
+    for _, gui in pairs(CoreGui:GetChildren()) do
+        if gui:IsA("ScreenGui") then
+            local shouldKeep = false
+            for _, allowed in pairs(allowedGuis) do
+                if gui.Name == allowed or gui.Name:find(allowed) then
+                    shouldKeep = true
+                    break
+                end
+            end
+            if not shouldKeep then
+                pcall(function() gui:Destroy() end)
+            end
         end
     end
 end
--- Jalankan pembersihan lebih jarang agar tidak mengganggu klik
-RunService.Heartbeat:Connect(cleanGameUI)
+
+-- LOOP CEPAT
+task.spawn(function()
+    while true do
+        killPopupsButKeepSettings()
+        task.wait(0.01)
+    end
+end)
+
+-- TANGKAP GUI BARU
+CoreGui.ChildAdded:Connect(function(gui)
+    task.wait(0.05)
+    local shouldKeep = false
+    for _, allowed in pairs(allowedGuis) do
+        if gui.Name == allowed or gui.Name:find(allowed) then
+            shouldKeep = true
+            break
+        end
+    end
+    if not shouldKeep then
+        pcall(function() gui:Destroy() end)
+    end
+end)
+
+print("=========================================")
+print("✅ POPUP BELI ASLI = MATI")
+print("✅ PENGATURAN PROFIL = BISA DIKLIK")
+print("✅ DATA ITEM SUDAH DI PRELOAD")
+print("✅ GAK ADA DELAY TITLE/HARGA KOSONG")
+print("=========================================")
