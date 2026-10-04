@@ -1,0 +1,778 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local Colors = {
+	Background   = Color3.fromRGB(15, 15, 18),
+	Sidebar      = Color3.fromRGB(18, 18, 22),
+	Panel        = Color3.fromRGB(22, 22, 27),
+	Slot         = Color3.fromRGB(28, 28, 34),
+	SlotHover    = Color3.fromRGB(38, 38, 46),
+	Text         = Color3.fromRGB(240, 240, 240),
+	SubText      = Color3.fromRGB(140, 140, 150),
+	ToggleOn     = Color3.fromRGB(255, 255, 255),
+	ToggleOff    = Color3.fromRGB(60, 60, 70),
+	Stroke       = Color3.fromRGB(45, 45, 55),
+}
+
+local State = {
+	FlyMode = false,
+	TeleportPlayer = false,
+	TeleportRandom = false,
+	SelectedTarget = nil,
+	AutoFarm = false,
+	AimLock = false,
+	AntiDeathPunch = false,
+	AutoBlock = false,
+}
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ZorXHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = playerGui
+
+local PopupLayer = Instance.new("Frame")
+PopupLayer.Name = "PopupLayer"
+PopupLayer.Size = UDim2.new(1, 0, 1, 0)
+PopupLayer.BackgroundTransparency = 1
+PopupLayer.ZIndex = 50
+PopupLayer.Parent = ScreenGui
+
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 500, 0, 320)
+Main.Position = UDim2.new(0.5, -250, 0.5, -160)
+Main.BackgroundColor3 = Colors.Background
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Main.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = Main
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Colors.Stroke
+MainStroke.Thickness = 1
+MainStroke.Parent = Main
+
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 30)
+TopBar.BackgroundColor3 = Colors.Background
+TopBar.BorderSizePixel = 0
+TopBar.Parent = Main
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 8)
+TopBarCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(0, 250, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "zorX  |  Tsb"
+Title.TextColor3 = Colors.Text
+Title.Font = Enum.Font.GothamMedium
+Title.TextSize = 12
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -30, 0.5, -13)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 12
+CloseBtn.AutoButtonColor = false
+CloseBtn.Active = true
+CloseBtn.ZIndex = 5
+CloseBtn.Parent = TopBar
+
+CloseBtn.MouseEnter:Connect(function()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
+		TextColor3 = Color3.fromRGB(255, 80, 80)
+	}):Play()
+end)
+CloseBtn.MouseLeave:Connect(function()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
+		TextColor3 = Color3.fromRGB(200, 200, 200)
+	}):Play()
+end)
+
+-- ===== MINIMIZE BUTTON (kotak tajam, draggable) =====
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Name = "MinimizeBtn"
+MinimizeBtn.Size = UDim2.new(0, 36, 0, 36)
+MinimizeBtn.Position = UDim2.new(0, 12, 0, 12)
+MinimizeBtn.BackgroundColor3 = Colors.Background
+MinimizeBtn.BorderSizePixel = 0
+MinimizeBtn.Text = "Z"
+MinimizeBtn.TextColor3 = Colors.Text
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.TextSize = 16
+MinimizeBtn.AutoButtonColor = false
+MinimizeBtn.ZIndex = 60
+MinimizeBtn.Visible = false
+MinimizeBtn.Active = true
+MinimizeBtn.Draggable = true
+MinimizeBtn.Parent = ScreenGui
+
+local MinimizeStroke = Instance.new("UIStroke")
+MinimizeStroke.Color = Colors.Stroke
+MinimizeStroke.Thickness = 1
+MinimizeStroke.Parent = MinimizeBtn
+
+MinimizeBtn.MouseEnter:Connect(function()
+	TweenService:Create(MinimizeBtn, TweenInfo.new(0.15), {
+		BackgroundColor3 = Colors.SlotHover
+	}):Play()
+end)
+MinimizeBtn.MouseLeave:Connect(function()
+	TweenService:Create(MinimizeBtn, TweenInfo.new(0.15), {
+		BackgroundColor3 = Colors.Background
+	}):Play()
+end)
+
+local function setUIOpen(open)
+	Main.Visible = open
+	PopupLayer.Visible = open
+	MinimizeBtn.Visible = not open
+end
+
+CloseBtn.MouseButton1Click:Connect(function()
+	setUIOpen(false)
+end)
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+	setUIOpen(true)
+end)
+-- ====================================================
+
+local TopDivider = Instance.new("Frame")
+TopDivider.Name = "TopDivider"
+TopDivider.Size = UDim2.new(1, 0, 0, 1)
+TopDivider.Position = UDim2.new(0, 0, 0, 30)
+TopDivider.BackgroundColor3 = Colors.Stroke
+TopDivider.BorderSizePixel = 0
+TopDivider.Parent = Main
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 120, 1, -31)
+Sidebar.Position = UDim2.new(0, 0, 0, 31)
+Sidebar.BackgroundColor3 = Colors.Sidebar
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = Main
+
+local SidebarList = Instance.new("UIListLayout")
+SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarList.Padding = UDim.new(0, 2)
+SidebarList.Parent = Sidebar
+
+local SidebarPad = Instance.new("UIPadding")
+SidebarPad.PaddingTop = UDim.new(0, 8)
+SidebarPad.PaddingLeft = UDim.new(0, 6)
+SidebarPad.PaddingRight = UDim.new(0, 6)
+SidebarPad.Parent = Sidebar
+
+local SidebarDivider = Instance.new("Frame")
+SidebarDivider.Name = "SidebarDivider"
+SidebarDivider.Size = UDim2.new(0, 1, 1, -31)
+SidebarDivider.Position = UDim2.new(0, 120, 0, 31)
+SidebarDivider.BackgroundColor3 = Colors.Stroke
+SidebarDivider.BorderSizePixel = 0
+SidebarDivider.Parent = Main
+
+local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -121, 1, -31)
+Content.Position = UDim2.new(0, 121, 0, 31)
+Content.BackgroundColor3 = Colors.Panel
+Content.BorderSizePixel = 0
+Content.Parent = Main
+
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Name = "Scroll"
+Scroll.Size = UDim2.new(1, -16, 1, -16)
+Scroll.Position = UDim2.new(0, 8, 0, 8)
+Scroll.BackgroundTransparency = 1
+Scroll.BorderSizePixel = 0
+Scroll.ScrollBarThickness = 4
+Scroll.ScrollBarImageColor3 = Colors.Stroke
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Scroll.Parent = Content
+
+local ScrollPad = Instance.new("UIPadding")
+ScrollPad.PaddingRight = UDim.new(0, 6)
+ScrollPad.Parent = Scroll
+
+local ScrollList = Instance.new("UIListLayout")
+ScrollList.SortOrder = Enum.SortOrder.LayoutOrder
+ScrollList.Padding = UDim.new(0, 8)
+ScrollList.Parent = Scroll
+
+local function createSectionHeader(text, order)
+	local header = Instance.new("TextLabel")
+	header.Name = "Header_" .. text
+	header.Size = UDim2.new(1, 0, 0, 16)
+	header.BackgroundTransparency = 1
+	header.Text = text
+	header.TextColor3 = Colors.SubText
+	header.Font = Enum.Font.GothamBold
+	header.TextSize = 10
+	header.TextXAlignment = Enum.TextXAlignment.Left
+	header.LayoutOrder = order
+	header.Parent = Scroll
+	return header
+end
+
+local function createToggle(titleText, descText, order, callback, initialState)
+	local row = Instance.new("Frame")
+	row.Name = "Toggle_" .. titleText
+	row.Size = UDim2.new(1, 0, 0, 42)
+	row.BackgroundColor3 = Colors.Slot
+	row.BorderSizePixel = 0
+	row.LayoutOrder = order
+	row.Parent = Scroll
+
+	local rowCorner = Instance.new("UICorner")
+	rowCorner.CornerRadius = UDim.new(0, 6)
+	rowCorner.Parent = row
+
+	local rowStroke = Instance.new("UIStroke")
+	rowStroke.Color = Colors.Stroke
+	rowStroke.Thickness = 1
+	rowStroke.Parent = row
+
+	local title = Instance.new("TextLabel")
+	title.Name = "Title"
+	title.Size = UDim2.new(1, -70, 0, 16)
+	title.Position = UDim2.new(0, 10, 0, 6)
+	title.BackgroundTransparency = 1
+	title.Text = titleText
+	title.TextColor3 = Colors.Text
+	title.Font = Enum.Font.GothamMedium
+	title.TextSize = 11
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = row
+
+	local desc = Instance.new("TextLabel")
+	desc.Name = "Desc"
+	desc.Size = UDim2.new(1, -70, 0, 12)
+	desc.Position = UDim2.new(0, 10, 0, 22)
+	desc.BackgroundTransparency = 1
+	desc.Text = descText
+	desc.TextColor3 = Colors.SubText
+	desc.Font = Enum.Font.Gotham
+	desc.TextSize = 9
+	desc.TextXAlignment = Enum.TextXAlignment.Left
+	desc.Parent = row
+
+	local toggleBg = Instance.new("TextButton")
+	toggleBg.Name = "Toggle"
+	toggleBg.Size = UDim2.new(0, 34, 0, 18)
+	toggleBg.Position = UDim2.new(1, -44, 0.5, -9)
+	toggleBg.BackgroundColor3 = Colors.ToggleOff
+	toggleBg.BorderSizePixel = 0
+	toggleBg.Text = ""
+	toggleBg.AutoButtonColor = false
+	toggleBg.Parent = row
+
+	local toggleCorner = Instance.new("UICorner")
+	toggleCorner.CornerRadius = UDim.new(1, 0)
+	toggleCorner.Parent = toggleBg
+
+	local knob = Instance.new("Frame")
+	knob.Name = "Knob"
+	knob.Size = UDim2.new(0, 14, 0, 14)
+	knob.Position = UDim2.new(0, 2, 0.5, -7)
+	knob.BackgroundColor3 = Color3.fromRGB(180, 180, 190)
+	knob.BorderSizePixel = 0
+	knob.Parent = toggleBg
+
+	local knobCorner = Instance.new("UICorner")
+	knobCorner.CornerRadius = UDim.new(1, 0)
+	knobCorner.Parent = knob
+
+	local isOn = initialState or false
+	if isOn then
+		toggleBg.BackgroundColor3 = Colors.ToggleOn
+		knob.Position = UDim2.new(1, -16, 0.5, -7)
+		knob.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+	end
+
+	toggleBg.MouseButton1Click:Connect(function()
+		isOn = not isOn
+		if isOn then
+			TweenService:Create(toggleBg, TweenInfo.new(0.2), {
+				BackgroundColor3 = Colors.ToggleOn
+			}):Play()
+			TweenService:Create(knob, TweenInfo.new(0.2), {
+				Position = UDim2.new(1, -16, 0.5, -7),
+				BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+			}):Play()
+		else
+			TweenService:Create(toggleBg, TweenInfo.new(0.2), {
+				BackgroundColor3 = Colors.ToggleOff
+			}):Play()
+			TweenService:Create(knob, TweenInfo.new(0.2), {
+				Position = UDim2.new(0, 2, 0.5, -7),
+				BackgroundColor3 = Color3.fromRGB(180, 180, 190)
+			}):Play()
+		end
+		if callback then callback(isOn) end
+	end)
+
+	return row, toggleBg
+end
+
+local function createDropdown(titleText, descText, order, callback, initialState)
+	local row = Instance.new("Frame")
+	row.Name = "Dropdown_" .. titleText
+	row.Size = UDim2.new(1, 0, 0, 42)
+	row.BackgroundColor3 = Colors.Slot
+	row.BorderSizePixel = 0
+	row.LayoutOrder = order
+	row.Parent = Scroll
+
+	local rowCorner = Instance.new("UICorner")
+	rowCorner.CornerRadius = UDim.new(0, 6)
+	rowCorner.Parent = row
+
+	local rowStroke = Instance.new("UIStroke")
+	rowStroke.Color = Colors.Stroke
+	rowStroke.Thickness = 1
+	rowStroke.Parent = row
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, -130, 0, 16)
+	title.Position = UDim2.new(0, 10, 0, 6)
+	title.BackgroundTransparency = 1
+	title.Text = titleText
+	title.TextColor3 = Colors.Text
+	title.Font = Enum.Font.GothamMedium
+	title.TextSize = 11
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = row
+
+	local desc = Instance.new("TextLabel")
+	desc.Size = UDim2.new(1, -130, 0, 12)
+	desc.Position = UDim2.new(0, 10, 0, 22)
+	desc.BackgroundTransparency = 1
+	desc.Text = descText
+	desc.TextColor3 = Colors.SubText
+	desc.Font = Enum.Font.Gotham
+	desc.TextSize = 9
+	desc.TextXAlignment = Enum.TextXAlignment.Left
+	desc.Parent = row
+
+	local dropBox = Instance.new("TextButton")
+	dropBox.Name = "DropBox"
+	dropBox.Size = UDim2.new(0, 110, 0, 24)
+	dropBox.Position = UDim2.new(1, -120, 0.5, -12)
+	dropBox.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+	dropBox.BorderSizePixel = 0
+	dropBox.Text = initialState or "Pilih Player..."
+	dropBox.TextColor3 = Colors.Text
+	dropBox.Font = Enum.Font.Gotham
+	dropBox.TextSize = 10
+	dropBox.AutoButtonColor = false
+	dropBox.Parent = row
+
+	local dbCorner = Instance.new("UICorner")
+	dbCorner.CornerRadius = UDim.new(0, 5)
+	dbCorner.Parent = dropBox
+
+	local popup = Instance.new("Frame")
+	popup.Name = "Popup_" .. titleText
+	popup.Size = UDim2.new(0, 0, 0, 0)
+	popup.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+	popup.BorderSizePixel = 0
+	popup.Visible = false
+	popup.ZIndex = 100
+	popup.ClipsDescendants = true
+	popup.Parent = PopupLayer
+
+	local popupCorner = Instance.new("UICorner")
+	popupCorner.CornerRadius = UDim.new(0, 5)
+	popupCorner.Parent = popup
+
+	local popupStroke = Instance.new("UIStroke")
+	popupStroke.Color = Colors.Stroke
+	popupStroke.Thickness = 1
+	popupStroke.Parent = popup
+
+	local popupScroll = Instance.new("ScrollingFrame")
+	popupScroll.Size = UDim2.new(1, 0, 1, 0)
+	popupScroll.BackgroundTransparency = 1
+	popupScroll.BorderSizePixel = 0
+	popupScroll.ScrollBarThickness = 3
+	popupScroll.ScrollBarImageColor3 = Colors.Stroke
+	popupScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	popupScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	popupScroll.Parent = popup
+
+	local popupList = Instance.new("UIListLayout")
+	popupList.SortOrder = Enum.SortOrder.LayoutOrder
+	popupList.Padding = UDim.new(0, 2)
+	popupList.Parent = popupScroll
+
+	local popupPad = Instance.new("UIPadding")
+	popupPad.PaddingTop = UDim.new(0, 4)
+	popupPad.PaddingBottom = UDim.new(0, 4)
+	popupPad.PaddingLeft = UDim.new(0, 4)
+	popupPad.PaddingRight = UDim.new(0, 4)
+	popupPad.Parent = popupScroll
+
+	local isOpen = false
+
+	local function refreshPopup()
+		for _, child in pairs(popupScroll:GetChildren()) do
+			if child:IsA("TextButton") or child:IsA("TextLabel") then
+				child:Destroy()
+			end
+		end
+
+		local count = 0
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= player then
+				count += 1
+				local item = Instance.new("TextButton")
+				item.Name = "Player_" .. p.Name
+				item.Size = UDim2.new(1, -6, 0, 22)
+				item.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+				item.BackgroundTransparency = 1
+				item.BorderSizePixel = 0
+				item.Text = p.Name
+				item.TextColor3 = Colors.Text
+				item.Font = Enum.Font.Gotham
+				item.TextSize = 10
+				item.TextXAlignment = Enum.TextXAlignment.Left
+				item.AutoButtonColor = false
+				item.LayoutOrder = count
+				item.Parent = popupScroll
+
+				local itemCorner = Instance.new("UICorner")
+				itemCorner.CornerRadius = UDim.new(0, 4)
+				itemCorner.Parent = item
+
+				local itemPad = Instance.new("UIPadding")
+				itemPad.PaddingLeft = UDim.new(0, 6)
+				itemPad.Parent = item
+
+				item.MouseEnter:Connect(function()
+					TweenService:Create(item, TweenInfo.new(0.15), {
+						BackgroundTransparency = 0.5,
+						BackgroundColor3 = Colors.SlotHover
+					}):Play()
+				end)
+
+				item.MouseLeave:Connect(function()
+					TweenService:Create(item, TweenInfo.new(0.15), {
+						BackgroundTransparency = 1
+					}):Play()
+				end)
+
+				item.MouseButton1Click:Connect(function()
+					dropBox.Text = p.Name
+					State.SelectedTarget = p.Name
+					isOpen = false
+					TweenService:Create(popup, TweenInfo.new(0.15), {
+						Size = UDim2.new(0, 110, 0, 0)
+					}):Play()
+					task.wait(0.15)
+					popup.Visible = false
+					if callback then callback(p.Name) end
+				end)
+			end
+		end
+
+		if count == 0 then
+			local empty = Instance.new("TextLabel")
+			empty.Size = UDim2.new(1, -6, 0, 22)
+			empty.BackgroundTransparency = 1
+			empty.Text = "Tidak ada player"
+			empty.TextColor3 = Colors.SubText
+			empty.Font = Enum.Font.Gotham
+			empty.TextSize = 10
+			empty.Parent = popupScroll
+		end
+
+		return count
+	end
+
+	dropBox.MouseButton1Click:Connect(function()
+		isOpen = not isOpen
+		if isOpen then
+			local count = refreshPopup()
+			local absPos = dropBox.AbsolutePosition
+			local absSize = dropBox.AbsoluteSize
+			popup.Position = UDim2.new(0, absPos.X - 3, 0, absPos.Y + absSize.Y + 2)
+			popup.Visible = true
+			local h = math.max(math.min(count, 5) * 24 + 8, 30)
+			TweenService:Create(popup, TweenInfo.new(0.15), {
+				Size = UDim2.new(0, 110, 0, h)
+			}):Play()
+		else
+			TweenService:Create(popup, TweenInfo.new(0.15), {
+				Size = UDim2.new(0, 110, 0, 0)
+			}):Play()
+			task.wait(0.15)
+			popup.Visible = false
+		end
+	end)
+
+	Players.PlayerAdded:Connect(function()
+		if isOpen then refreshPopup() end
+	end)
+	Players.PlayerRemoving:Connect(function()
+		if isOpen then refreshPopup() end
+	end)
+
+	return row, dropBox
+end
+
+local sidebarButtons = {}
+local activeTab = nil
+
+local function createSidebarButton(text, order, onClick)
+	local btn = Instance.new("TextButton")
+	btn.Name = text
+	btn.Size = UDim2.new(1, 0, 0, 26)
+	btn.BackgroundColor3 = Colors.Sidebar
+	btn.BackgroundTransparency = 1
+	btn.BorderSizePixel = 0
+	btn.Text = ""
+	btn.AutoButtonColor = false
+	btn.LayoutOrder = order
+	btn.Parent = Sidebar
+
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 5)
+	btnCorner.Parent = btn
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Name = "Label"
+	textLabel.Size = UDim2.new(1, -16, 1, 0)
+	textLabel.Position = UDim2.new(0, 8, 0, 0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.Text = text
+	textLabel.TextColor3 = Colors.SubText
+	textLabel.Font = Enum.Font.GothamMedium
+	textLabel.TextSize = 11
+	textLabel.TextXAlignment = Enum.TextXAlignment.Left
+	textLabel.Parent = btn
+
+	btn.MouseEnter:Connect(function()
+		if activeTab ~= btn then
+			TweenService:Create(btn, TweenInfo.new(0.15), {
+				BackgroundTransparency = 0.7,
+				BackgroundColor3 = Colors.SlotHover
+			}):Play()
+			TweenService:Create(textLabel, TweenInfo.new(0.15), {
+				TextColor3 = Colors.Text
+			}):Play()
+		end
+	end)
+
+	btn.MouseLeave:Connect(function()
+		if activeTab ~= btn then
+			TweenService:Create(btn, TweenInfo.new(0.15), {
+				BackgroundTransparency = 1
+			}):Play()
+			TweenService:Create(textLabel, TweenInfo.new(0.15), {
+				TextColor3 = Colors.SubText
+			}):Play()
+		end
+	end)
+
+	btn.MouseButton1Click:Connect(function()
+		for _, b in pairs(sidebarButtons) do
+			TweenService:Create(b, TweenInfo.new(0.15), {
+				BackgroundTransparency = 1
+			}):Play()
+			local lbl = b:FindFirstChild("Label")
+			if lbl then
+				TweenService:Create(lbl, TweenInfo.new(0.15), {
+					TextColor3 = Colors.SubText
+				}):Play()
+			end
+		end
+		activeTab = btn
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundTransparency = 0.5,
+			BackgroundColor3 = Colors.SlotHover
+		}):Play()
+		TweenService:Create(textLabel, TweenInfo.new(0.15), {
+			TextColor3 = Colors.Text
+		}):Play()
+
+		if onClick then onClick() end
+	end)
+
+	table.insert(sidebarButtons, btn)
+	return btn
+end
+
+local function clearContent()
+	for _, child in pairs(Scroll:GetChildren()) do
+		if not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
+			child:Destroy()
+		end
+	end
+
+	for _, child in pairs(PopupLayer:GetChildren()) do
+		child.Visible = false
+	end
+end
+
+-- ============================================================
+-- 🎯 AIMLOCK FULL CONTROL (LOAD + FORCE STOP + DESTROY GUI)
+-- ============================================================
+local AIMLOCK_URL = "https://raw.githubusercontent.com/NandazorxHub/https-github.com-NandazorxHub-ZorxHub/refs/heads/main/aimlock.lua"
+local AIMLOCK_GUI_NAME = "NzkAimlock"
+
+local function findAimlockGui()
+	return game.CoreGui:FindFirstChild(AIMLOCK_GUI_NAME)
+end
+
+local function clearAllOutlines()
+	-- hapus semua Highlight bernama ZorxOutline di semua karakter
+	for _, p in pairs(Players:GetPlayers()) do
+		if p.Character then
+			for _, child in pairs(p.Character:GetChildren()) do
+				if child:IsA("Highlight") and child.Name == "ZorxOutline" then
+					child:Destroy()
+				end
+			end
+		end
+	end
+end
+
+local function aimlockForceStop()
+	-- 1. Panggil _G.ZorxAimlockOff kalau ada (dari script aimlock yang udah di-update)
+	if _G.ZorxAimlockOff then
+		pcall(_G.ZorxAimlockOff)
+	end
+
+	-- 2. Destroy GUI aimlock di pojok kanan atas
+	local gui = findAimlockGui()
+	if gui then
+		gui:Destroy()
+	end
+
+	-- 3. Bersihin semua outline yang mungkin masih nempel
+	clearAllOutlines()
+
+	-- 4. Reset posisi kamera supaya ga ngunci lagi
+	pcall(function()
+		workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+	end)
+
+	-- 5. Bersihin semua _G yang nyangkut
+	_G.ZorxAimlockOn = nil
+	_G.ZorxAimlockOff = nil
+	_G.ZorxAimlockStatus = nil
+end
+
+local function aimlockStart()
+	-- load ulang script aimlock dari GitHub (fresh, tanpa sisa)
+	local gui = findAimlockGui()
+	if gui then
+		-- kalau masih ada, destroy dulu biar fresh
+		gui:Destroy()
+	end
+	clearAllOutlines()
+
+	loadstring(game:HttpGet(AIMLOCK_URL))()
+
+	-- tunggu script init
+	task.wait(0.5)
+end
+-- ============================================================
+
+local function loadFarmPanel()
+	clearContent()
+	local order = 1
+
+	createSectionHeader("COMBAT", order); order += 1
+
+	createToggle("Auto Farm", "Otomatis farming terus menerus", order, function(state)
+		State.AutoFarm = state
+	end, State.AutoFarm); order += 1
+
+	createToggle("Aim Lock", "Kunci arah ke target otomatis", order, function(state)
+		State.AimLock = state
+
+		if state then
+			-- ON: load ulang script aimlock fresh
+			aimlockStart()
+		else
+			-- OFF: matiin total + hancurin GUI + bersihin outline
+			aimlockForceStop()
+		end
+	end, State.AimLock); order += 1
+
+	createToggle("Anti Death Punch", "Punch tanpa mati", order, function(state)
+		State.AntiDeathPunch = state
+	end, State.AntiDeathPunch); order += 1
+
+	createToggle("Auto Block", "Otomatis block serangan", order, function(state)
+		State.AutoBlock = state
+	end, State.AutoBlock); order += 1
+end
+
+local function loadMiscPanel()
+	clearContent()
+	local order = 1
+
+	createSectionHeader("MOVEMENT", order); order += 1
+	createToggle("Fly Mode", "Terbang bebas di udara", order, function(state)
+		State.FlyMode = state
+	end, State.FlyMode); order += 1
+
+	createSectionHeader("TELEPORT", order); order += 1
+
+	createDropdown("Target Player", "Pilih player target", order, function(value)
+		State.SelectedTarget = value
+	end, State.SelectedTarget); order += 1
+
+	createToggle("Teleport Player", "Teleport ke player yang dipilih", order, function(state)
+		State.TeleportPlayer = state
+	end, State.TeleportPlayer); order += 1
+
+	createToggle("Teleport Random", "Teleport terus ke player acak", order, function(state)
+		State.TeleportRandom = state
+	end, State.TeleportRandom); order += 1
+end
+
+local function loadHomePanel()
+	clearContent()
+	local order = 1
+	createSectionHeader("HOME", order); order += 1
+	createToggle("Placeholder", "Coming soon...", order, function() end); order += 1
+end
+
+createSidebarButton("Home", 1, loadHomePanel)
+createSidebarButton("Farm", 2, loadFarmPanel)
+createSidebarButton("Misc", 3, loadMiscPanel)
+
+task.wait(0.1)
+if sidebarButtons[2] then
+	sidebarButtons[2].MouseButton1Click:Fire()
+end
+
+print("zorX | Tsb - UI Loaded!")
