@@ -1,3 +1,8 @@
+--============================================================
+-- ZORX HUB - TSB EDITION
+-- UI + Anti Death Punch Terintegrasi
+--============================================================
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -29,6 +34,423 @@ local State = {
 	AntiDeathPunch = false,
 	AutoBlock = false,
 }
+
+--============================================================
+-- AUTO KILL DEATH - RESPAWN PROOF (DIBUNGKUS JADI FUNCTION)
+--============================================================
+
+local AntiDeathPunchConnections = {}
+local AntiDeathPunchActive = false
+
+local function startAntiDeathPunch()
+    if AntiDeathPunchActive then return end
+    AntiDeathPunchActive = true
+
+    local ADP_Players = game:GetService("Players")
+    local ADP_RunService = game:GetService("RunService")
+    local ADP_Workspace = game:GetService("Workspace")
+
+    local teleportPosition = Vector3.new(
+        240.31468200683594,
+        -491.9150390625,
+        -183.96755981445312
+    )
+
+    local holdDuration = 10
+    local teleportInterval = 0.03
+    local destroyRange = 25
+
+    local ADP_player = ADP_Players.LocalPlayer
+    local looping = false
+    local cameraLocked = false
+    local freezeActive = false
+    local watchedCharacters = {}
+    local savedCFrame = nil
+
+    local function getChar()
+        return ADP_player.Character
+    end
+
+    local function getRoot()
+        local char = getChar()
+        if not char then return nil end
+        return char:FindFirstChild("HumanoidRootPart")
+    end
+
+    local function getHumanoid()
+        local char = getChar()
+        if not char then return nil end
+        return char:FindFirstChildOfClass("Humanoid")
+    end
+
+    local function destroyConstraints(char)
+        if not char then return 0 end
+        local count = 0
+
+        for _, obj in ipairs(char:GetDescendants()) do
+            local shouldDestroy = false
+
+            if obj:IsA("AlignPosition")
+            or obj:IsA("AlignOrientation")
+            or obj:IsA("BodyPosition")
+            or obj:IsA("BodyGyro")
+            or obj:IsA("BodyVelocity")
+            or obj:IsA("BodyForce")
+            or obj:IsA("LinearVelocity")
+            or obj:IsA("AngularVelocity")
+            or obj:IsA("VectorForce")
+            or obj:IsA("RopeConstraint")
+            or obj:IsA("RodConstraint")
+            or obj:IsA("SpringConstraint")
+            or obj:IsA("BallSocketConstraint")
+            or obj:IsA("HingeConstraint")
+            or obj:IsA("PrismaticConstraint")
+            or obj:IsA("UniversalConstraint")
+            or obj:IsA("CylindricalConstraint")
+            or obj:IsA("PlaneConstraint")
+            or obj:IsA("WeldConstraint")
+            then
+                shouldDestroy = true
+            end
+
+            if obj:IsA("Weld") then
+                local parent = obj.Parent
+                if parent then
+                    local pName = parent.Name:lower()
+                    if pName:match("torso") or pName:match("head")
+                    or pName:match("arm") or pName:match("leg")
+                    or pName:match("hand") or pName:match("foot")
+                    or pName == "humanoidrootpart" then
+                        shouldDestroy = false
+                    else
+                        shouldDestroy = true
+                    end
+                end
+            end
+
+            if shouldDestroy then
+                pcall(function()
+                    obj:Destroy()
+                    count = count + 1
+                end)
+            end
+        end
+
+        return count
+    end
+
+    local function destroyNearbyEnemyConstraints()
+        local char = getChar()
+        if not char then return 0 end
+
+        local myRoot = getRoot()
+        if not myRoot then return 0 end
+
+        local Live = ADP_Workspace:FindFirstChild("Live")
+        if not Live then return 0 end
+
+        local count = 0
+
+        for _, otherChar in ipairs(Live:GetChildren()) do
+            if otherChar:IsA("Model") and otherChar ~= char then
+                local otherRoot = otherChar:FindFirstChild("HumanoidRootPart")
+                if otherRoot then
+                    local dist = (otherRoot.Position - myRoot.Position).Magnitude
+                    if dist < destroyRange then
+                        count = count + destroyConstraints(otherChar)
+                    end
+                end
+            end
+        end
+
+        return count
+    end
+
+    local renderConn
+    renderConn = ADP_RunService.RenderStepped:Connect(function()
+        if not freezeActive then return end
+
+        local root = getRoot()
+        if not root then return end
+
+        root.CFrame = CFrame.new(teleportPosition)
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+
+        if cameraLocked then
+            local cam = ADP_Workspace.CurrentCamera
+            if cam then
+                pcall(function()
+                    cam.CameraType = Enum.CameraType.Scriptable
+                    cam.CFrame = CFrame.new(
+                        teleportPosition + Vector3.new(0, 20, 30),
+                        teleportPosition
+                    )
+                end)
+            end
+        end
+    end)
+
+    local function createPlatform(position)
+        local platform = Instance.new("Part")
+        platform.Name = "TemporaryPlatform"
+        platform.Size = Vector3.new(12, 1, 12)
+        platform.Position = position
+        platform.Anchored = true
+        platform.CanCollide = true
+        platform.CanTouch = false
+        platform.CanQuery = false
+        platform.Color = Color3.new(1, 0, 0)
+        platform.Transparency = 0.3
+        platform.Parent = ADP_Workspace
+        return platform
+    end
+
+    local function loopTeleport()
+        if looping then return end
+        looping = true
+
+        local char = getChar()
+        if not char then looping = false return end
+
+        local rootPart = getRoot()
+        if not rootPart then looping = false return end
+
+        savedCFrame = rootPart.CFrame
+
+        destroyConstraints(char)
+        destroyNearbyEnemyConstraints()
+
+        cameraLocked = true
+
+        local platform = createPlatform(
+            teleportPosition + Vector3.new(0, -3, 0)
+        )
+
+        freezeActive = true
+
+        local startTime = tick()
+
+        while tick() - startTime < holdDuration and looping do
+            local currentChar = getChar()
+            if currentChar ~= char then
+                warn("[AUTO KILL] Character berubah (respawn?), break loop")
+                break
+            end
+
+            local currentRoot = getRoot()
+            if not currentRoot then break end
+
+            currentRoot.CFrame = CFrame.new(teleportPosition)
+            currentRoot.AssemblyLinearVelocity = Vector3.zero
+            currentRoot.AssemblyAngularVelocity = Vector3.zero
+
+            if math.floor((tick() - startTime) * 2) % 2 == 0 then
+                destroyConstraints(currentChar)
+                destroyNearbyEnemyConstraints()
+            end
+
+            task.wait(teleportInterval)
+        end
+
+        freezeActive = false
+        cameraLocked = false
+
+        if platform and platform.Parent then
+            platform:Destroy()
+        end
+
+        local finalChar = getChar()
+        if savedCFrame and finalChar == char then
+            local finalRoot = getRoot()
+            if finalRoot then
+                finalRoot.CFrame = savedCFrame
+                finalRoot.AssemblyLinearVelocity = Vector3.zero
+                finalRoot.AssemblyAngularVelocity = Vector3.zero
+            end
+        end
+
+        savedCFrame = nil
+        looping = false
+
+        task.wait(0.2)
+        pcall(function()
+            local cam = ADP_Workspace.CurrentCamera
+            local hum = getHumanoid()
+            if cam and hum then
+                cam.CameraSubject = hum
+                cam.CameraType = Enum.CameraType.Custom
+            end
+        end)
+    end
+
+    local function watchCharacter(targetCharacter)
+        if not targetCharacter then return end
+        if targetCharacter == ADP_player.Character then return end
+        if watchedCharacters[targetCharacter] then return end
+
+        watchedCharacters[targetCharacter] = true
+
+        for _, obj in ipairs(targetCharacter:GetChildren()) do
+            if obj.Name == "DCRecent" then
+                warn("[AUTO KILL] DCRecent EXISTING:", targetCharacter.Name)
+                task.spawn(loopTeleport)
+            end
+        end
+
+        local connChild
+        connChild = targetCharacter.ChildAdded:Connect(function(obj)
+            if obj.Name == "DCRecent" then
+                warn("[AUTO KILL] DCRecent NEW:", targetCharacter.Name)
+                task.spawn(loopTeleport)
+            end
+        end)
+
+        local connAnc
+        connAnc = targetCharacter.AncestryChanged:Connect(function(_, parent)
+            if not parent then
+                watchedCharacters[targetCharacter] = nil
+                if connChild then connChild:Disconnect() end
+                if connAnc then connAnc:Disconnect() end
+            end
+        end)
+
+        table.insert(AntiDeathPunchConnections, connChild)
+        table.insert(AntiDeathPunchConnections, connAnc)
+    end
+
+    local function setupLive()
+        local Live = ADP_Workspace:FindFirstChild("Live")
+        if not Live then
+            Live = ADP_Workspace:WaitForChild("Live", 10)
+        end
+        if not Live then return end
+
+        for _, targetCharacter in ipairs(Live:GetChildren()) do
+            if targetCharacter:IsA("Model") then
+                watchCharacter(targetCharacter)
+            end
+        end
+
+        local connLive
+        connLive = Live.ChildAdded:Connect(function(targetCharacter)
+            if targetCharacter:IsA("Model") then
+                task.wait(0.1)
+                watchCharacter(targetCharacter)
+            end
+        end)
+
+        table.insert(AntiDeathPunchConnections, connLive)
+    end
+
+    local connRespawn
+    connRespawn = ADP_player.CharacterAdded:Connect(function(newChar)
+        warn("[AUTO KILL] ====================")
+        warn("[AUTO KILL] RESPAWN DETECTED!")
+        warn("[AUTO KILL] ====================")
+
+        looping = false
+        cameraLocked = false
+        freezeActive = false
+        savedCFrame = nil
+
+        for _, obj in ipairs(ADP_Workspace:GetChildren()) do
+            if obj.Name == "TemporaryPlatform" then
+                obj:Destroy()
+            end
+        end
+
+        newChar:WaitForChild("HumanoidRootPart", 5)
+        newChar:WaitForChild("Humanoid", 5)
+        task.wait(2)
+
+        pcall(function()
+            local cam = ADP_Workspace.CurrentCamera
+            local hum = newChar:FindFirstChildOfClass("Humanoid")
+            if cam and hum then
+                cam.CameraSubject = hum
+                cam.CameraType = Enum.CameraType.Custom
+            end
+        end)
+
+        watchedCharacters = {}
+        task.spawn(setupLive)
+
+        warn("[AUTO KILL] RESPAWN READY - siap terima trigger!")
+    end)
+
+    table.insert(AntiDeathPunchConnections, connRespawn)
+    table.insert(AntiDeathPunchConnections, renderConn)
+
+    task.spawn(setupLive)
+
+    _G._AntiDeathPunch_Cleanup = function()
+        for _, conn in ipairs(AntiDeathPunchConnections) do
+            pcall(function() conn:Disconnect() end)
+        end
+        AntiDeathPunchConnections = {}
+
+        looping = false
+        cameraLocked = false
+        freezeActive = false
+        savedCFrame = nil
+        watchedCharacters = {}
+
+        for _, obj in ipairs(ADP_Workspace:GetChildren()) do
+            if obj.Name == "TemporaryPlatform" then
+                obj:Destroy()
+            end
+        end
+
+        pcall(function()
+            local cam = ADP_Workspace.CurrentCamera
+            local hum = getHumanoid()
+            if cam and hum then
+                cam.CameraSubject = hum
+                cam.CameraType = Enum.CameraType.Custom
+            end
+        end)
+    end
+
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "zorX anti Puch",
+            Text = "ON",
+            Duration = 5
+        })
+    end)
+
+    warn("============================================")
+    warn(" AUTO KILL DEATH - RESPAWN PROOF")
+    warn("============================================")
+    warn("Kunci: JANGAN cache character!")
+    warn("Setiap akses pakai getChar()/getRoot()")
+    warn("============================================")
+end
+
+local function stopAntiDeathPunch()
+    if not AntiDeathPunchActive then return end
+    AntiDeathPunchActive = false
+
+    if _G._AntiDeathPunch_Cleanup then
+        pcall(_G._AntiDeathPunch_Cleanup)
+        _G._AntiDeathPunch_Cleanup = nil
+    end
+
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "ZorX anti Puch",
+            Text = "OFF.",
+            Duration = 3
+        })
+    end)
+
+    warn("[AUTO KILL] Anti Death Punch DIMATIKAN")
+end
+
+--============================================================
+-- UI CODE
+--============================================================
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ZorXHub"
@@ -111,17 +533,16 @@ CloseBtn.MouseLeave:Connect(function()
 	}):Play()
 end)
 
--- ===== MINIMIZE BUTTON (kotak tajam, draggable) =====
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Name = "MinimizeBtn"
-MinimizeBtn.Size = UDim2.new(0, 36, 0, 36)
-MinimizeBtn.Position = UDim2.new(0, 12, 0, 12)
+MinimizeBtn.Size = UDim2.new(0, 45, 0, 45)
+MinimizeBtn.Position = UDim2.new(0.5, -22, 0.5, -22)
 MinimizeBtn.BackgroundColor3 = Colors.Background
 MinimizeBtn.BorderSizePixel = 0
 MinimizeBtn.Text = "Z"
 MinimizeBtn.TextColor3 = Colors.Text
 MinimizeBtn.Font = Enum.Font.GothamBold
-MinimizeBtn.TextSize = 16
+MinimizeBtn.TextSize = 26
 MinimizeBtn.AutoButtonColor = false
 MinimizeBtn.ZIndex = 60
 MinimizeBtn.Visible = false
@@ -158,7 +579,6 @@ end)
 MinimizeBtn.MouseButton1Click:Connect(function()
 	setUIOpen(true)
 end)
--- ====================================================
 
 local TopDivider = Instance.new("Frame")
 TopDivider.Name = "TopDivider"
@@ -640,7 +1060,7 @@ local function clearContent()
 end
 
 -- ============================================================
--- 🎯 AIMLOCK FULL CONTROL (LOAD + FORCE STOP + DESTROY GUI)
+-- AIMLOCK FULL CONTROL
 -- ============================================================
 local AIMLOCK_URL = "https://raw.githubusercontent.com/NandazorxHub/https-github.com-NandazorxHub-ZorxHub/refs/heads/main/aimlock.lua"
 local AIMLOCK_GUI_NAME = "NzkAimlock"
@@ -650,7 +1070,6 @@ local function findAimlockGui()
 end
 
 local function clearAllOutlines()
-	-- hapus semua Highlight bernama ZorxOutline di semua karakter
 	for _, p in pairs(Players:GetPlayers()) do
 		if p.Character then
 			for _, child in pairs(p.Character:GetChildren()) do
@@ -663,43 +1082,35 @@ local function clearAllOutlines()
 end
 
 local function aimlockForceStop()
-	-- 1. Panggil _G.ZorxAimlockOff kalau ada (dari script aimlock yang udah di-update)
 	if _G.ZorxAimlockOff then
 		pcall(_G.ZorxAimlockOff)
 	end
 
-	-- 2. Destroy GUI aimlock di pojok kanan atas
 	local gui = findAimlockGui()
 	if gui then
 		gui:Destroy()
 	end
 
-	-- 3. Bersihin semua outline yang mungkin masih nempel
 	clearAllOutlines()
 
-	-- 4. Reset posisi kamera supaya ga ngunci lagi
 	pcall(function()
 		workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
 	end)
 
-	-- 5. Bersihin semua _G yang nyangkut
 	_G.ZorxAimlockOn = nil
 	_G.ZorxAimlockOff = nil
 	_G.ZorxAimlockStatus = nil
 end
 
 local function aimlockStart()
-	-- load ulang script aimlock dari GitHub (fresh, tanpa sisa)
 	local gui = findAimlockGui()
 	if gui then
-		-- kalau masih ada, destroy dulu biar fresh
 		gui:Destroy()
 	end
 	clearAllOutlines()
 
 	loadstring(game:HttpGet(AIMLOCK_URL))()
 
-	-- tunggu script init
 	task.wait(0.5)
 end
 -- ============================================================
@@ -718,16 +1129,20 @@ local function loadFarmPanel()
 		State.AimLock = state
 
 		if state then
-			-- ON: load ulang script aimlock fresh
 			aimlockStart()
 		else
-			-- OFF: matiin total + hancurin GUI + bersihin outline
 			aimlockForceStop()
 		end
 	end, State.AimLock); order += 1
 
 	createToggle("Anti Death Punch", "Punch tanpa mati", order, function(state)
 		State.AntiDeathPunch = state
+
+		if state then
+			startAntiDeathPunch()
+		else
+			stopAntiDeathPunch()
+		end
 	end, State.AntiDeathPunch); order += 1
 
 	createToggle("Auto Block", "Otomatis block serangan", order, function(state)
@@ -775,4 +1190,4 @@ if sidebarButtons[2] then
 	sidebarButtons[2].MouseButton1Click:Fire()
 end
 
-print("zorX | Tsb - UI Loaded!")
+print("zorX | Tsb - UI Loaded with Anti Death Punch!")
