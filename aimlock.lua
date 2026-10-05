@@ -1,285 +1,289 @@
--- ============================================
--- 🎯 NANDA×ZORX AIMLOCK (TSB FINAL — TIDAK SENTUH SKILL/ULTIMATE)
--- Outline + Lock + TP belakang HANYA saat block ASLI
--- PENTING: TIDAK mendeteksi skill / ultimate / efek apapun sebagai block
--- Khusus The Strongest Battlegrounds — TIDAK UBAH BAGIAN LAIN
--- ============================================
+--============================================================
+-- AIMLOCK - ZORX HUB EDITION (WITH STOP FUNCTION)
+--============================================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+local mouse = player:GetMouse()
 
--- ===== STATE =====
-local aimlockOn = false
-local lockTarget = nil
-local bodyOutline = nil
-local lastTP = 0
-local TP_COOLDOWN = 0.8
-local TP_DISTANCE = 3.5
-local DEBUG = true
+--============================================================
+-- STATE
+--============================================================
+_G.ZorxAimlockRunning = true
+_G.ZorxAimlockLocked = false
+_G.ZorxAimlockTarget = nil
+_G.ZorxAimlockOn = true
 
--- ===== OUTLINE =====
-local function removeOutline()
-    if bodyOutline then
-        bodyOutline:Destroy()
-        bodyOutline = nil
-    end
+local Connections = {}
+local Highlights = {}
+
+--============================================================
+-- CLEANUP FUNCTION (DIPANGGIL DARI LUAR)
+--============================================================
+local function cleanupAll()
+	_G.ZorxAimlockRunning = false
+	_G.ZorxAimlockLocked = false
+	_G.ZorxAimlockTarget = nil
+	_G.ZorxAimlockOn = false
+
+	-- Disconnect semua connection
+	for _, conn in ipairs(Connections) do
+		pcall(function() conn:Disconnect() end)
+	end
+	Connections = {}
+
+	-- Hapus semua highlight
+	for _, h in ipairs(Highlights) do
+		pcall(function() h:Destroy() end)
+	end
+	Highlights = {}
+
+	-- Hapus GUI aimlock
+	for _, obj in ipairs(game.CoreGui:GetChildren()) do
+		if obj:IsA("ScreenGui") and (obj.Name:lower():find("aim") or obj.Name:lower():find("nzk")) then
+			pcall(function() obj:Destroy() end)
+		end
+	end
+
+	-- Reset camera
+	pcall(function()
+		local cam = workspace.CurrentCamera
+		local char = player.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if cam then
+			cam.CameraType = Enum.CameraType.Custom
+			if hum then
+				cam.CameraSubject = hum
+			end
+		end
+	end)
+
+	print("[AIMLOCK] Cleanup - Semua di-stop dan di-reset")
 end
 
-local function applyOutline(character)
-    if not character then return end
-    if bodyOutline and bodyOutline.Adornee == character then return end
-    if bodyOutline then bodyOutline:Destroy() end
+-- Expose ke global biar bisa dipanggil dari UI
+_G.ZorxAimlockOff = cleanupAll
 
-    local hl = Instance.new("Highlight")
-    hl.Name = "ZorxOutline"
-    hl.Adornee = character
-    hl.FillTransparency = 1
-    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
-    hl.OutlineTransparency = 0
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.Parent = character
+--============================================================
+-- GUI AIMLOCK (tombol Lock/Unlock di pojok kanan atas)
+--============================================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NzkAimlock"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = game.CoreGui
 
-    bodyOutline = hl
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "Main"
+MainFrame.Size = UDim2.new(0, 160, 0, 90)
+MainFrame.Position = UDim2.new(1, -170, 0, 20)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(180, 0, 0)
+MainStroke.Thickness = 1.5
+MainStroke.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 24)
+Title.BackgroundTransparency = 1
+Title.Text = "🎯 AIMLOCK"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 12
+Title.Parent = MainFrame
+
+local LockBtn = Instance.new("TextButton")
+LockBtn.Name = "LockBtn"
+LockBtn.Size = UDim2.new(1, -20, 0, 24)
+LockBtn.Position = UDim2.new(0, 10, 0, 30)
+LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+LockBtn.Text = "🔓 UNLOCKED"
+LockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LockBtn.Font = Enum.Font.GothamBold
+LockBtn.TextSize = 11
+LockBtn.AutoButtonColor = false
+LockBtn.Parent = MainFrame
+
+local LockCorner = Instance.new("UICorner")
+LockCorner.CornerRadius = UDim.new(0, 5)
+LockCorner.Parent = LockBtn
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 20)
+StatusLabel.Position = UDim2.new(0, 10, 0, 60)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: IDLE"
+StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextSize = 10
+StatusLabel.Parent = MainFrame
+
+--============================================================
+-- FUNCTION: CLEAR HIGHLIGHT
+--============================================================
+local function clearHighlight()
+	for _, h in ipairs(Highlights) do
+		pcall(function() h:Destroy() end)
+	end
+	Highlights = {}
 end
 
--- ===== DETEKSI BLOCK ASLI — TIDAK SENTUH SKILL/ULTIMATE =====
--- HANYA mendeteksi block RESMI TSB. SEMUA efek skill/ultra DIABAIKAN.
-local function checkRealBlock(character)
-    if not character then return false, "no-char" end
+--============================================================
+-- FUNCTION: APPLY HIGHLIGHT KE TARGET
+--============================================================
+local function applyHighlight(targetChar)
+	clearHighlight()
+	if not targetChar then return end
 
-    -- ==== DAFTAR NAMA ANAK SKILL/ULTIMATE TSB — DIABAIKAN SEPENUHNYA ====
-    local SKILL_EFFECTS_TO_IGNORE = {
-        "ForceField" -- ⚠️ Khusus TSB: ForceField sering muncul di skill/ultra — JANGAN pakai ini sebagai satu-satunya penanda!
-    }
+	local hl = Instance.new("Highlight")
+	hl.Adornee = targetChar
+	hl.FillColor = Color3.fromRGB(255, 0, 0)
+	hl.FillTransparency = 0.5
+	hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+	hl.OutlineTransparency = 0
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent = targetChar
 
-    local hum = character:FindFirstChildOfClass("Humanoid")
-    if not hum then return false, "no-hum" end
-
-    -- ✅ Cek Attribute RESMI Block TSB saja
-    local BLOCK_ATTRS = {
-        "Blocking",
-        "IsBlocking",
-        "Blocked",
-        "IsBlocked",
-        "IsGuarding",
-        "GuardActive"
-    }
-    for _, attr in ipairs(BLOCK_ATTRS) do
-        local ok, val = pcall(function() return hum:GetAttribute(attr) end)
-        if ok and val == true then return true, "HumAttr:"..attr end
-        
-        local ok2, val2 = pcall(function() return character:GetAttribute(attr) end)
-        if ok2 and val2 == true then return true, "CharAttr:"..attr end
-    end
-
-    -- ✅ Cek BoolValue dengan nama PERSIS
-    local function scanBool(parent, tag)
-        if not parent then return nil end
-        for _, child in ipairs(parent:GetChildren()) do
-            if child:IsA("BoolValue") and child.Value == true then
-                local n = child.Name
-                if n == "Blocking" or n == "IsBlocking" or n == "Blocked"
-                    or n == "IsBlocked" or n == "IsGuarding"
-                    or n == "GuardActive" then
-                    return tag..":"..n
-                end
-            end
-        end
-        return nil
-    end
-
-    local r1 = scanBool(character, "BoolChar")
-    if r1 then return true, r1 end
-    local r2 = scanBool(hum, "BoolHum")
-    if r2 then return true, r2 end
-
-    -- ✅ ForceField HANYA dihitung jika TIDAK ada tanda skill berjalan
-    -- Ini mencegah deteksi saat orang pakai ultimate/skill pelindung
-    local hasForceField = character:FindFirstChildOfClass("ForceField") 
-                        or hum:FindFirstChildOfClass("ForceField")
-    
-    if hasForceField then
-        -- Cek: apakah ada attribute block BERSAMA ForceField? Baru dianggap block asli
-        local hasBlockAttr = false
-        for _, attr in ipairs(BLOCK_ATTRS) do
-            local ok, val = pcall(function() return hum:GetAttribute(attr) end)
-            if ok and val == true then hasBlockAttr = true break end
-            local ok2, val2 = pcall(function() return character:GetAttribute(attr) end)
-            if ok2 and val2 == true then hasBlockAttr = true break end
-        end
-        if hasBlockAttr then
-            return true, "ForceField+Attr"
-        end
-        -- Kalau cuma ForceField sendirian = kemungkinan skill/ultra → DIABAIKAN
-        return false, "Skill-FF-Ignored"
-    end
-
-    return false, "none"
+	table.insert(Highlights, hl)
 end
 
--- ===== TELEPORT KE BELAKANG =====
-local function teleportBehind(targetChar)
-    local myChar = player.Character
-    if not myChar then return end
+--============================================================
+-- FUNCTION: CARI TARGET TERDEKAT DENGAN MOUSE
+--============================================================
+local function getTargetUnderMouse()
+	local closest = nil
+	local shortest = math.huge
+	local mousePos = UserInputService:GetMouseLocation()
 
-    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-    local tgtHRP = targetChar:FindFirstChild("HumanoidRootPart")
-    if not myHRP or not tgtHRP then return end
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= player and p.Character then
+			local hum = p.Character:FindFirstChildOfClass("Humanoid")
+			local root = p.Character:FindFirstChild("HumanoidRootPart")
+			if hum and root and hum.Health > 0 then
+				local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
+				if onScreen then
+					local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+					if dist < shortest and dist < 300 then
+						shortest = dist
+						closest = p.Character
+					end
+				end
+			end
+		end
+	end
 
-    local targetLook = tgtHRP.CFrame.LookVector
-    local behindPos = tgtHRP.Position - targetLook * TP_DISTANCE
-    behindPos = Vector3.new(behindPos.X, tgtHRP.Position.Y, behindPos.Z)
-
-    local newCF = CFrame.lookAt(behindPos, tgtHRP.Position)
-
-    pcall(function()
-        myHRP.AssemblyLinearVelocity = Vector3.zero
-        myHRP.AssemblyAngularVelocity = Vector3.zero
-        myHRP.Velocity = Vector3.zero
-    end)
-
-    pcall(function()
-        myChar:PivotTo(newCF)
-    end)
-
-    pcall(function()
-        myHRP.AssemblyLinearVelocity = Vector3.zero
-        myHRP.AssemblyAngularVelocity = Vector3.zero
-    end)
+	return closest
 end
 
--- ===== CARI TARGET =====
-local function getTargetUnderCursor()
-    local closest = nil
-    local shortest = math.huge
-    local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+--============================================================
+-- LOCK / UNLOCK
+--============================================================
+LockBtn.MouseButton1Click:Connect(function()
+	if not _G.ZorxAimlockRunning then return end
 
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= player and v.Character then
-            local hrp = v.Character:FindFirstChild("HumanoidRootPart")
-            local hum = v.Character:FindFirstChild("Humanoid")
-            if hrp and hum and hum.Health > 0 then
-                local pos, visible = camera:WorldToViewportPoint(hrp.Position)
-                if visible and pos.Z > 0 then
-                    local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if dist < shortest then
-                        shortest = dist
-                        closest = hrp
-                    end
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- ===== GUI =====
-local aimGui = Instance.new("ScreenGui")
-aimGui.Name = "NzkAimlock"
-aimGui.ResetOnSpawn = false
-aimGui.Parent = game.CoreGui
-
-local aimContainer = Instance.new("Frame", aimGui)
-aimContainer.Size = UDim2.new(0, 140, 0, 45)
-aimContainer.Position = UDim2.new(1, -150, 0, 15)
-aimContainer.BackgroundTransparency = 1
-
-local aimlockBtn = Instance.new("TextButton", aimContainer)
-aimlockBtn.Size = UDim2.new(0, 100, 1, 0)
-aimlockBtn.Text = "AIM: OFF"
-aimlockBtn.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-aimlockBtn.TextColor3 = Color3.new(1, 1, 1)
-aimlockBtn.Font = Enum.Font.GothamBold
-aimlockBtn.TextSize = 14
-Instance.new("UICorner", aimlockBtn)
-Instance.new("UIStroke", aimlockBtn).Color = Color3.fromRGB(200, 0, 0)
-
-local aimToggle = Instance.new("TextButton", aimContainer)
-aimToggle.Size = UDim2.new(0, 35, 0, 35)
-aimToggle.Position = UDim2.new(0, 105, 0, 5)
-aimToggle.Text = "▢"
-aimToggle.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-aimToggle.TextColor3 = Color3.new(1, 1, 1)
-aimToggle.Font = Enum.Font.GothamBold
-Instance.new("UICorner", aimToggle)
-Instance.new("UIStroke", aimToggle).Color = Color3.fromRGB(200, 0, 0)
-
-aimToggle.MouseButton1Click:Connect(function()
-    aimlockBtn.Visible = not aimlockBtn.Visible
-    aimToggle.Text = aimlockBtn.Visible and "▢" or "_"
+	if _G.ZorxAimlockLocked then
+		-- UNLOCK
+		_G.ZorxAimlockLocked = false
+		_G.ZorxAimlockTarget = nil
+		clearHighlight()
+		LockBtn.Text = "🔓 UNLOCKED"
+		LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		StatusLabel.Text = "Status: UNLOCKED"
+		StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+	else
+		-- LOCK
+		local target = getTargetUnderMouse()
+		if target then
+			_G.ZorxAimlockLocked = true
+			_G.ZorxAimlockTarget = target
+			applyHighlight(target)
+			LockBtn.Text = "🔒 LOCKED"
+			LockBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+			StatusLabel.Text = "Target: " .. target.Name
+			StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+		else
+			StatusLabel.Text = "Target: Tidak ada"
+			StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+		end
+	end
 end)
 
-aimlockBtn.MouseButton1Click:Connect(function()
-    aimlockOn = not aimlockOn
+--============================================================
+-- LOOP: UPDATE CAMERA SETIAP FRAME (kalau LOCKED)
+--============================================================
+local cameraConn = RunService.RenderStepped:Connect(function()
+	-- 🔥 CEK FLAG STop — kalau false, langsung break
+	if not _G.ZorxAimlockRunning then
+		cameraConn:Disconnect()
+		return
+	end
 
-    if aimlockOn then
-        lockTarget = getTargetUnderCursor()
-        if lockTarget then
-            aimlockBtn.Text = "LOCKED"
-            aimlockBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-            applyOutline(lockTarget.Parent)
-        else
-            aimlockOn = false
-            aimlockBtn.Text = "AIM: OFF"
-            aimlockBtn.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-        end
-    else
-        lockTarget = nil
-        aimlockBtn.Text = "AIM: OFF"
-        aimlockBtn.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-        removeOutline()
-    end
+	if not _G.ZorxAimlockLocked then return end
+
+	local target = _G.ZorxAimlockTarget
+	if not target or not target.Parent then
+		_G.ZorxAimlockLocked = false
+		_G.ZorxAimlockTarget = nil
+		clearHighlight()
+		LockBtn.Text = "🔓 UNLOCKED"
+		LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		StatusLabel.Text = "Status: Target hilang"
+		return
+	end
+
+	local targetHead = target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
+	local hum = target:FindFirstChildOfClass("Humanoid")
+
+	if not targetHead or not hum or hum.Health <= 0 then
+		_G.ZorxAimlockLocked = false
+		_G.ZorxAimlockTarget = nil
+		clearHighlight()
+		LockBtn.Text = "🔓 UNLOCKED"
+		LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		StatusLabel.Text = "Status: Target mati"
+		return
+	end
+
+	-- 🔥 FIX CAMERA: paksa kamera lihat ke target
+	local cam = workspace.CurrentCamera
+	if cam then
+		cam.CFrame = CFrame.new(cam.CFrame.Position, targetHead.Position)
+	end
 end)
 
--- ===== LOOP =====
-RunService.RenderStepped:Connect(function()
-    if not aimlockOn then return end
+table.insert(Connections, cameraConn)
 
-    local valid = lockTarget
-        and lockTarget.Parent
-        and lockTarget.Parent:FindFirstChild("Humanoid")
-        and lockTarget.Parent.Humanoid.Health > 0
+--============================================================
+-- AUTO CLEANUP kalau script di-reload
+--============================================================
+if _G._ZorxAimlockPreviousCleanup then
+	pcall(_G._ZorxAimlockPreviousCleanup)
+end
+_G._ZorxAimlockPreviousCleanup = cleanupAll
 
-    if not valid then
-        lockTarget = getTargetUnderCursor()
-        if lockTarget then
-            applyOutline(lockTarget.Parent)
-        else
-            removeOutline()
-            return
-        end
-    end
-
-    if not lockTarget then return end
-
-    applyOutline(lockTarget.Parent)
-    camera.CFrame = CFrame.new(camera.CFrame.Position, lockTarget.Position)
-
-    -- HANYA TP kalau BENAR-BENAR block ASLI — skill/ultra TIDAK memicu
-    local blocking, reason = checkRealBlock(lockTarget.Parent)
-    if blocking then
-        local now = tick()
-        if now - lastTP >= TP_COOLDOWN then
-            lastTP = now
-            if DEBUG then
-                print("[ZORX] TP karena:", reason)
-            end
-            teleportBehind(lockTarget.Parent)
-        end
-    end
+--============================================================
+-- NOTIFIKASI
+--============================================================
+pcall(function()
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "🎯 Aimlock Loaded",
+		Text = "Tekan tombol LOCK untuk kunci target",
+		Duration = 3
+	})
 end)
 
--- ===== CLEANUP =====
-Players.PlayerRemoving:Connect(function(plr)
-    if lockTarget and lockTarget.Parent == plr.Character then
-        lockTarget = nil
-        aimlockOn = false
-        aimlockBtn.Text = "AIM: OFF"
-        aimlockBtn.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-        removeOutline()
-    end
-end)
-
-print("🎯 ZORX AIMLOCK TSB LOADED — Skill/Ultimate TIDAK terdeteksi sebagai block ✅")
+print("[AIMLOCK] Loaded - _G.ZorxAimlockOff() untuk stop")
