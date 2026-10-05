@@ -1,6 +1,6 @@
 --============================================================
 -- ZORX HUB - TSB EDITION (ALL IN ONE)
--- FLY + FIX LAG + AIMLOCK + ANTI DEATH PUNCH
+-- FLY + FIX LAG + AIMLOCK + ANTI DEATH PUNCH + AWAKEN HIGHLIGHT
 --============================================================
 
 local Players = game:GetService("Players")
@@ -468,7 +468,7 @@ player.CharacterAdded:Connect(function()
 end)
 
 --============================================================
--- AIMLOCK SYSTEM (TSB FINAL - TIDAK SENTUH SKILL/ULTIMATE)
+-- AIMLOCK SYSTEM
 --============================================================
 local aimlockOn = false
 local lockTarget = nil
@@ -768,8 +768,181 @@ local function aimlockForceStop()
 end
 
 --============================================================
--- AUTO KILL DEATH - RESPAWN PROOF
+-- AWAKENING HIGHLIGHT (TSB) - DETECT "Ulted" attribute
 --============================================================
+local awakenTracked = {}
+local awakenActive = false
+local awakenConn = nil
+local awakenHeartbeat = nil
+
+local AWAKEN_ATTRS = {
+    "Ulted", "UsedUltimate", "JustUlted",
+    "Awakening", "Awakened", "UltimateActive",
+    "IsUltimate", "Mode", "FinalForm"
+}
+
+local function awakenApplyHighlight(character)
+    if not character then return end
+
+    local data = awakenTracked[character]
+    if data and data.highlight and data.highlight.Parent then return end
+
+    for _, child in ipairs(character:GetChildren()) do
+        if child:IsA("Highlight") and child.Name == "ZorxAwakenHL" then
+            child:Destroy()
+        end
+    end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "ZorxAwakenHL"
+    hl.Adornee = character
+    hl.FillTransparency = 1
+    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Parent = character
+
+    if data then data.highlight = hl end
+end
+
+local function awakenRemoveHighlight(character)
+    if not character then return end
+    for _, child in ipairs(character:GetChildren()) do
+        if child:IsA("Highlight") and child.Name == "ZorxAwakenHL" then
+            pcall(function() child:Destroy() end)
+        end
+    end
+    local data = awakenTracked[character]
+    if data then data.highlight = nil end
+end
+
+local function awakenIsAwakening(character)
+    if not character then return false end
+    local hum = character:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return false end
+
+    local ok, val = pcall(function() return character:GetAttribute("Ulted") end)
+    if ok and val == true then return true end
+
+    local ok2, val2 = pcall(function() return hum:GetAttribute("Ulted") end)
+    if ok2 and val2 == true then return true end
+
+    for _, attr in ipairs(AWAKEN_ATTRS) do
+        if attr ~= "Ulted" then
+            local okA, valA = pcall(function() return character:GetAttribute(attr) end)
+            if okA and valA == true then return true end
+        end
+    end
+
+    return false
+end
+
+local function awakenCheckCharacter(character)
+    if not character then return end
+    if character == player.Character then return end
+
+    local hum = character:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    if not awakenTracked[character] then
+        awakenTracked[character] = { isAwaken = false, highlight = nil }
+    end
+    local data = awakenTracked[character]
+
+    local isAwake = awakenIsAwakening(character)
+
+    if isAwake and not data.isAwaken then
+        data.isAwaken = true
+        awakenApplyHighlight(character)
+    end
+
+    if not isAwake and data.isAwaken then
+        data.isAwaken = false
+        awakenRemoveHighlight(character)
+    end
+
+    if isAwake then
+        awakenApplyHighlight(character)
+    end
+end
+
+local awakenLastScan = 0
+
+local function awakenStart()
+    if awakenActive then return end
+    awakenActive = true
+
+    awakenHeartbeat = RunService.Heartbeat:Connect(function()
+        if not awakenActive then return end
+        if tick() - awakenLastScan < 0.2 then return end
+        awakenLastScan = tick()
+
+        local Live = Workspace:FindFirstChild("Live")
+        if not Live then return end
+
+        for _, obj in ipairs(Live:GetChildren()) do
+            if obj:IsA("Model") then
+                awakenCheckCharacter(obj)
+            end
+        end
+    end)
+
+    task.spawn(function()
+        local Live = Workspace:FindFirstChild("Live") or Workspace:WaitForChild("Live", 15)
+        if not Live then return end
+
+        Live.ChildAdded:Connect(function(obj)
+            if obj:IsA("Model") then
+                task.wait(0.2)
+                awakenCheckCharacter(obj)
+            end
+        end)
+
+        Live.ChildRemoved:Connect(function(obj)
+            if obj:IsA("Model") then
+                awakenTracked[obj] = nil
+                awakenRemoveHighlight(obj)
+            end
+        end)
+    end)
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            plr.Character.AttributeChanged:Connect(function(attr)
+                if attr == "Ulted" or attr == "UsedUltimate" or attr == "JustUlted" then
+                    local val = plr.Character:GetAttribute(attr)
+                    if val == true then
+                        awakenCheckCharacter(plr.Character)
+                    end
+                end
+            end)
+        end
+    end
+
+    print("[ZORX] Awakening Highlight ON")
+end
+
+local function awakenStop()
+    if not awakenActive then return end
+    awakenActive = false
+
+    if awakenHeartbeat then
+        pcall(function() awakenHeartbeat:Disconnect() end)
+        awakenHeartbeat = nil
+    end
+
+    for char, _ in pairs(awakenTracked) do
+        awakenRemoveHighlight(char)
+    end
+    awakenTracked = {}
+
+    print("[ZORX] Awakening Highlight OFF")
+end
+
+--============================================================
+-- ANTI DEATH PUNCH - RESPAWN PROOF (VERSI LAMA / ASLI)
+-- + Auto nyalain/matiin Awakening Highlight
+-- ============================================================
 
 local AntiDeathPunchConnections = {}
 local AntiDeathPunchActive = false
@@ -1133,10 +1306,13 @@ local function startAntiDeathPunch()
         end)
     end
 
+    -- 🔥 Auto nyalain Awakening Highlight bareng ADP
+    if awakenStart then awakenStart() end
+
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "zorX anti Puch",
-            Text = "ON",
+            Text = "ON + Awakening Highlight",
             Duration = 5
         })
     end)
@@ -1151,10 +1327,13 @@ local function stopAntiDeathPunch()
         _G._AntiDeathPunch_Cleanup = nil
     end
 
+    -- 🔥 Auto matiin Awakening Highlight bareng ADP
+    if awakenStop then awakenStop() end
+
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "ZorX anti Puch",
-            Text = "OFF.",
+            Text = "OFF + Awakening Highlight",
             Duration = 3
         })
     end)
@@ -1814,7 +1993,7 @@ local function loadMiscPanel()
 		end
 	end, State.AimLock); order += 1
 
-	createToggle("Anti Death Punch", "Punch tanpa mati", order, function(state)
+	createToggle("Anti Death Punch", "Punch tanpa mati + Awakening Highlight", order, function(state)
 		State.AntiDeathPunch = state
 
 		if state then
