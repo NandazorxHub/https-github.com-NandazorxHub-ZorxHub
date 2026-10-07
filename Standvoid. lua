@@ -1,0 +1,139 @@
+--============================================================
+-- TP KE VOID + STAND TETAP + KEBAL + FREEZE 5 DETIK
+-- HANYA JALAN SEKALI SAAT EXECUTE
+--============================================================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- POSISI VOID
+local TARGET_POS = Vector3.new(240.31, -491.92, -183.97)
+local FREEZE_TIME = 5.0
+
+local lantai = nil
+local posAsal = nil
+
+-- BUAT LANTAI BIAR BISA BERDIRI
+local function bikinLantai()
+	if lantai and lantai.Parent then lantai:Destroy() end
+
+	local p = Instance.new("Part")
+	p.Name = "StandVoid"
+	p.Size = Vector3.new(20, 1.5, 20)
+	p.Position = TARGET_POS - Vector3.new(0, 2, 0)
+	p.Anchored = true
+	p.CanCollide = true
+	p.Color = Color3.fromRGB(0, 255, 0)
+	p.Material = Enum.Material.Neon
+	p.Parent = workspace
+
+	lantai = p
+	print("[✅] Lantai dipasang")
+end
+
+-- FREEZE DI VOID
+local function freezeDiVoid(durasi)
+	local startTime = tick()
+	local counter = 0
+
+	print("[FREEZE] Mulai " .. durasi .. "s")
+
+	while tick() - startTime < durasi do
+		local char = player.Character
+		if not char then break end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChild("Humanoid")
+		if not root or not hum then break end
+
+		root.CFrame = CFrame.new(TARGET_POS)
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+
+		hum.WalkSpeed = 0
+		hum.JumpPower = 0
+		hum.PlatformStand = true
+
+		hum.MaxHealth = math.huge
+		hum.Health = math.huge
+
+		if counter % 30 == 0 then
+			print("[FREEZE] " .. string.format("%.1f", tick() - startTime) .. "s / " .. durasi .. "s")
+		end
+
+		counter = counter + 1
+		task.wait(0.03)
+	end
+
+	print("[FREEZE] Selesai")
+end
+
+-- ============================================================
+-- EKSEKUSI UTAMA (SEKALI SAJA)
+-- ============================================================
+local function mulai()
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChild("Humanoid")
+	if not root or not hum then
+		warn("[!] Character belum siap")
+		return
+	end
+
+	-- Simpen posisi awal
+	posAsal = root.CFrame
+	print("[START] Posisi awal disimpan")
+
+	bikinLantai()
+	task.wait(0.1)
+
+	-- TP ke VOID
+	root.CFrame = CFrame.new(TARGET_POS)
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
+
+	print("[✅] SUDAH DI VOID — Freeze " .. FREEZE_TIME .. "s")
+
+	-- FREEZE
+	freezeDiVoid(FREEZE_TIME)
+
+	-- BALIK NORMAL
+	print("[BALIK] Kembali normal...")
+
+	local c = player.Character
+	if c then
+		local r = c:FindFirstChild("HumanoidRootPart")
+		local h = c:FindFirstChildOfClass("Humanoid")
+
+		if h then
+			h.MaxHealth = 100
+			h.Health = 100
+			h.WalkSpeed = 16
+			h.JumpPower = 50
+			h.PlatformStand = false
+		end
+
+		if r and posAsal then
+			r.CFrame = posAsal
+			r.AssemblyLinearVelocity = Vector3.zero
+			r.AssemblyAngularVelocity = Vector3.zero
+		end
+	end
+
+	-- Hapus lantai
+	if lantai and lantai.Parent then
+		lantai:Destroy()
+		lantai = nil
+	end
+
+	print("[✅] BALIK KE POSISI AWAL — SELESAI")
+end
+
+-- Tunggu character siap, lalu eksekusi SEKALI
+task.spawn(function()
+	repeat task.wait(0.1) until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	task.wait(0.5)
+	mulai()
+end)
+
+print("[READY] TP VOID → Freeze " .. FREEZE_TIME .. "s → Balik Normal (sekali jalan)")
