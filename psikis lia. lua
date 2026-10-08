@@ -1,0 +1,209 @@
+--============================================================
+-- 📋 CRUSHING PULL — FIX DETEKSI TARGET SAJA
+--============================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- ⚙️ SETTING
+local SKILL_NAMA = "Crushing Pull"
+local POSISI_VOID_AMAN = Vector3.new(240.31, -470, -183.97)
+local POSISI_MUSUH_MATI = Vector3.new(240.31, -650, -183.97)
+local BATAS_MATI_Y = -495
+local JANGKAUAN = 35
+local DURASI = 6
+
+-- ⏱️ Waktu tunggu hitbox aktif sebelum cek target
+local WAKTU_TUNGGU = 0.35
+
+local posisiAsal = nil
+local sudahMati = {}
+local sedang = false
+local koneksi = nil
+
+print("════════════════════════════════════════════")
+print("✅ DETEKSI DIPERBAIKI — TP tetap seperti biasa")
+print("════════════════════════════════════════════")
+
+-- 🔍 DETEKSI MUSUH
+local function verifikasiMusuhKenaHit()
+	local kar = player.Character
+	if not kar then return {} end
+	local root = kar:FindFirstChild("HumanoidRootPart")
+	if not root then return {} end
+
+	local Live = workspace:FindFirstChild("Live")
+	if not Live then return {} end
+
+	local musuhKena = {}
+	for _, m in ipairs(Live:GetChildren()) do
+		if m:IsA("Model") and m ~= kar then
+			local rm = m:FindFirstChild("HumanoidRootPart")
+			local hm = m:FindFirstChildOfClass("Humanoid")
+			if rm and hm and hm.Health > 0 then
+				local jarak = (rm.Position - root.Position).Magnitude
+				if jarak <= JANGKAUAN then
+					table.insert(musuhKena, m)
+				end
+			end
+		end
+	end
+	return musuhKena
+end
+
+-- 🔍 PANTAU SKILL
+local function mulaiPantau()
+	local kar = player.Character
+	if not kar then return end
+
+	kar.ChildAdded:Connect(function(anak)
+		if anak.Name == SKILL_NAMA then
+			print("─────────────────────────────────────")
+			print("[🎯] SKILL DIPAKAI")
+			
+			task.wait(WAKTU_TUNGGU) -- ⏱️ Tunggu hitbox aktif
+			
+			local musuhValid = verifikasiMusuhKenaHit()
+			
+			if #musuhValid == 0 then
+				print("❌ GAK ADA TARGET → TETAP DI TEMPAT")
+				print("─────────────────────────────────────")
+				return -- ❌ BATAL TOTAL, GA LAKUKAN APA-APA
+			else
+				print("✅ TERDETEKSI " .. #musuhValid .. " MUSUH → JALANKAN SKILL")
+				aksiUtama(musuhValid)
+			end
+		end
+	end)
+	
+	print("[✅] Siap! Pakai skill!")
+end
+
+-- 🚀 TP & LOGIKA UTAMA — TIDAK DIUBAH
+function aksiUtama(targetMusuh)
+	if sedang then return end
+	sedang = true
+	sudahMati = {}
+
+	local kar = player.Character
+	if not kar then 
+		sedang = false
+		return 
+	end
+	local rootKamu = kar:FindFirstChild("HumanoidRootPart")
+	local hpKamu = kar:FindFirstChildOfClass("Humanoid")
+	if not rootKamu or not hpKamu then 
+		sedang = false
+		return 
+	end
+
+	posisiAsal = rootKamu.CFrame
+	print("[📍] Posisi asal disimpan")
+
+	rootKamu.CFrame = CFrame.new(POSISI_VOID_AMAN)
+	rootKamu.AssemblyLinearVelocity = Vector3.zero
+	print("[🛡️] TP KE VOID AMAN")
+
+	for _, m in ipairs(targetMusuh) do
+		if m and m.Parent then
+			pcall(function()
+				for _, d in ipairs(m:GetDescendants()) do
+					if d:IsA("Script") or d:IsA("LocalScript") then d:Destroy() end
+					if d:IsA("BodyVelocity") or d:IsA("LinearVelocity") or d:IsA("Weld") or d:IsA("WeldConstraint") or d:IsA("BodyPosition") then d:Destroy() end
+				end
+			end)
+		end
+	end
+
+	local mulai = tick()
+
+	koneksi = RunService.Heartbeat:Connect(function()
+		if tick() - mulai >= DURASI then
+			koneksi:Disconnect()
+			koneksi = nil
+			kembaliKeAsal()
+			return
+		end
+
+		if rootKamu and rootKamu.Position.Y < POSISI_VOID_AMAN.Y - 3 then
+			rootKamu.CFrame = CFrame.new(POSISI_VOID_AMAN)
+			rootKamu.AssemblyLinearVelocity = Vector3.zero
+		end
+		if hpKamu then
+			hpKamu.Health = hpKamu.MaxHealth
+			pcall(function() hpKamu:SetStateEnabled(Enum.HumanoidStateType.Dead, false) end)
+		end
+
+		for _, m in ipairs(targetMusuh) do
+			if m and m.Parent and not sudahMati[m] then
+				local rm = m:FindFirstChild("HumanoidRootPart")
+				local hm = m:FindFirstChildOfClass("Humanoid")
+				if rm and hm and hm.Health > 0 then
+					rm.CFrame = CFrame.new(
+						POSISI_MUSUH_MATI.X + math.random(-15, 15),
+						POSISI_MUSUH_MATI.Y,
+						POSISI_MUSUH_MATI.Z + math.random(-15, 15)
+					)
+					rm.AssemblyLinearVelocity = Vector3.new(0, -500, 0)
+					
+					if rm.Position.Y <= BATAS_MATI_Y then
+						hm.Health = 0
+						hm:ChangeState(Enum.HumanoidStateType.Dead)
+						sudahMati[m] = true
+						print("[💀] Musuh tereliminasi")
+					end
+				end
+			end
+		end
+	end)
+end
+
+-- 🏠 KEMBALI KE POSISI ASAL
+function kembaliKeAsal()
+	if koneksi then
+		koneksi:Disconnect()
+		koneksi = nil
+	end
+
+	local kar = player.Character
+	if not kar or not posisiAsal then 
+		sedang = false
+		return 
+	end
+	local root = kar:FindFirstChild("HumanoidRootPart")
+	local hp = kar:FindFirstChildOfClass("Humanoid")
+	if not root or not hp then 
+		sedang = false
+		return 
+	end
+
+	print("[🏠] BALIK KE POSISI ASAL")
+	for i = 1, 10 do
+		root.CFrame = posisiAsal
+		root.AssemblyLinearVelocity = Vector3.zero
+		task.wait(0.02)
+	end
+
+	pcall(function()
+		hp:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+		hp:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+	end)
+	hp.WalkSpeed = 16
+	hp.JumpPower = 50
+
+	sudahMati = {}
+	sedang = false
+
+	print("[✅] SELESAI")
+	print("─────────────────────────────────────")
+end
+
+-- ▶️ MULAI
+task.spawn(function()
+	repeat task.wait(0.05) until player.Character
+	task.wait(0.3)
+	mulaiPantau()
+end)
+
+print("[SIAP] Pakai skill!")
